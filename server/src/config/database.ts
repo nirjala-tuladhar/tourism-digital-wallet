@@ -1,7 +1,4 @@
 import mongoose from "mongoose";
-import dns from "node:dns";
-
-dns.setServers(["2400:1a00:8000:4::73"]);
 
 export const connectDatabase = async (): Promise<void> => {
   const mongoUri = process.env.MONGODB_URI;
