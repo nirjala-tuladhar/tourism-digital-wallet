@@ -6,7 +6,7 @@ export function Sidebar() {
       <nav>
         <ul className="space-y-2">
           <li>
-            <NavLink to="/">Dashboard</NavLink>
+            <NavLink to="/dashboard">Dashboard</NavLink>
           </li>
 
           <li>

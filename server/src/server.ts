@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import healthRoutes from "./routes/health.routes.js";
+import authRoutes from "./routes/auth.routes.js";
 import { connectDatabase } from "./config/database.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 
@@ -21,6 +22,9 @@ app.use(
 app.use(express.json());
 
 app.use("/api/health", healthRoutes);
+app.use("/api/auth", authRoutes);
+
+app.use(errorMiddleware);
 
 const startServer = async (): Promise<void> => {
   await connectDatabase();
@@ -29,9 +33,5 @@ const startServer = async (): Promise<void> => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 };
-
-app.use("/api/health", healthRoutes);
-
-app.use(errorMiddleware);
 
 startServer();
