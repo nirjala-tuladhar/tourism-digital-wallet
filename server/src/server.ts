@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import healthRoutes from "./routes/health.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import { corsOptions } from "./config/cors.js";
 import { connectDatabase } from "./config/database.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 
@@ -13,11 +14,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(helmet());
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL,
-  }),
-);
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
