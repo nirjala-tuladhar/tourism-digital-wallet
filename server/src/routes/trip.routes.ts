@@ -1,5 +1,10 @@
 import { Router } from "express";
 import {
+  confirmAttachmentHandler,
+  listAttachmentsHandler,
+  requestUploadUrlHandler,
+} from "../controllers/attachment.controller.js";
+import {
   createImportantDateHandler,
   deleteImportantDateHandler,
   getImportantDateHandler,
@@ -37,6 +42,13 @@ router.get("/:tripId/items", listTravelItemsHandler);
 router.get("/:tripId/items/:itemId", getTravelItemHandler);
 router.patch("/:tripId/items/:itemId", updateTravelItemHandler);
 router.delete("/:tripId/items/:itemId", deleteTravelItemHandler);
+
+router.post(
+  "/:tripId/items/:itemId/attachments/upload-url",
+  requestUploadUrlHandler,
+);
+router.post("/:tripId/items/:itemId/attachments", confirmAttachmentHandler);
+router.get("/:tripId/items/:itemId/attachments", listAttachmentsHandler);
 
 router.post("/:tripId/dates", createImportantDateHandler);
 router.get("/:tripId/dates", listImportantDatesHandler);

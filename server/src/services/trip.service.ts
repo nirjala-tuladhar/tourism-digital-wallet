@@ -1,8 +1,10 @@
 import { AppError } from "../middlewares/AppError.js";
 import { ImportantDate } from "../models/ImportantDate.js";
 import { TravelItem } from "../models/TravelItem.js";
+import { Attachment } from "../models/Attachment.js";
 import { Trip, type TripDocument } from "../models/Trip.js";
 import { assertValidObjectId } from "../utils/auth.js";
+import { deleteObject } from "./storage.service.js";
 import type {
   CreateTripInput,
   UpdateTripInput,
@@ -151,7 +153,18 @@ export const deleteTrip = async (
 ): Promise<void> => {
   const trip = await getOwnedTripOrThrow(tripId, userId);
 
+  const attachments = await Attachment.find({ tripId: trip._id, userId });
+
+  for (const attachment of attachments) {
+    try {
+      await deleteObject(attachment.storageKey);
+    } catch {
+      // Continue cleanup for remaining objects/metadata.
+    }
+  }
+
   await Promise.all([
+    Attachment.deleteMany({ tripId: trip._id, userId }),
     TravelItem.deleteMany({ tripId: trip._id, userId }),
     ImportantDate.deleteMany({ tripId: trip._id, userId }),
     trip.deleteOne(),
