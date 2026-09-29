@@ -6,12 +6,15 @@ import { DashboardPage } from "../pages/DashboardPage";
 import { LoginPage } from "../pages/LoginPage";
 import { RegisterPage } from "../pages/RegisterPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
+import { TripsPage } from "../pages/TripsPage";
+import { CreateTripPage } from "../pages/CreateTripPage";
+import { EditTripPage } from "../pages/EditTripPage";
+import { TripDetailPage } from "../pages/TripDetailPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
     <div>
       <h2 className="text-2xl font-semibold">{title}</h2>
-
       <p className="mt-2 text-gray-600">This section is under development.</p>
     </div>
   );
@@ -42,7 +45,34 @@ export function AppRoutes() {
             path="/trips"
             element={
               <MainLayout>
-                <PlaceholderPage title="Trips" />
+                <TripsPage />
+              </MainLayout>
+            }
+          />
+
+          <Route
+            path="/trips/new"
+            element={
+              <MainLayout>
+                <CreateTripPage />
+              </MainLayout>
+            }
+          />
+
+          <Route
+            path="/trips/:tripId"
+            element={
+              <MainLayout>
+                <TripDetailPage />
+              </MainLayout>
+            }
+          />
+
+          <Route
+            path="/trips/:tripId/edit"
+            element={
+              <MainLayout>
+                <EditTripPage />
               </MainLayout>
             }
           />
