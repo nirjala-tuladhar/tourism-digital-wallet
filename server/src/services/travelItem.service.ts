@@ -119,7 +119,7 @@ export const deleteTravelItem = async (
   await getOwnedTripOrThrow(tripId, userId);
   assertValidObjectId(itemId, "Travel item");
 
-  const item = await TravelItem.findOneAndDelete({
+  const item = await TravelItem.findOne({
     _id: itemId,
     tripId,
     userId,
@@ -128,4 +128,10 @@ export const deleteTravelItem = async (
   if (!item) {
     throw new AppError("Travel item not found", 404);
   }
+
+  const { deleteAttachmentsForTravelItem } = await import(
+    "./attachment.service.js"
+  );
+  await deleteAttachmentsForTravelItem(String(item._id), userId);
+  await item.deleteOne();
 };
