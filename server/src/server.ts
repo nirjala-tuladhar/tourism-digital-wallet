@@ -4,6 +4,8 @@ import cors from "cors";
 import helmet from "helmet";
 import healthRoutes from "./routes/health.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import tripRoutes from "./routes/trip.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 import { corsOptions } from "./config/cors.js";
 import { connectDatabase } from "./config/database.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
@@ -20,6 +22,8 @@ app.use(express.json());
 
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/trips", tripRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use(errorMiddleware);
 

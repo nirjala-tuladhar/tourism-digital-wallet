@@ -84,4 +84,10 @@ export const apiClient = {
 
   post: <T>(endpoint: string, body?: unknown, token?: string | null) =>
     request<T>(endpoint, { method: "POST", body, token }),
+
+  patch: <T>(endpoint: string, body?: unknown, token?: string | null) =>
+    request<T>(endpoint, { method: "PATCH", body, token }),
+
+  delete: <T>(endpoint: string, token?: string | null) =>
+    request<T>(endpoint, { method: "DELETE", token }),
 };
