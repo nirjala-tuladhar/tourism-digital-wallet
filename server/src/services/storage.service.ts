@@ -12,39 +12,37 @@ import {
   getUploadUrlExpiresInSeconds,
 } from "../config/storage.js";
 
-type R2Config = {
-  accountId: string;
+type B2Config = {
   accessKeyId: string;
   secretAccessKey: string;
   bucketName: string;
+  region: string;
   endpoint: string;
 };
 
 let cachedClient: S3Client | null = null;
-let cachedConfig: R2Config | null = null;
+let cachedConfig: B2Config | null = null;
 
-const getR2Config = (): R2Config => {
+const getB2Config = (): B2Config => {
   if (cachedConfig) {
     return cachedConfig;
   }
 
-  const accountId = process.env.R2_ACCOUNT_ID;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-  const bucketName = process.env.R2_BUCKET_NAME;
-  const endpoint =
-    process.env.R2_ENDPOINT ||
-    (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined);
+  const accessKeyId = process.env.B2_APPLICATION_KEY_ID?.trim();
+  const secretAccessKey = process.env.B2_APPLICATION_KEY?.trim();
+  const bucketName = process.env.B2_BUCKET_NAME?.trim();
+  const region = process.env.B2_REGION?.trim();
+  const endpoint = process.env.B2_ENDPOINT?.trim();
 
-  if (!accountId || !accessKeyId || !secretAccessKey || !bucketName || !endpoint) {
+  if (!accessKeyId || !secretAccessKey || !bucketName || !region || !endpoint) {
     throw new AppError("File storage is not configured", 503);
   }
 
   cachedConfig = {
-    accountId,
     accessKeyId,
     secretAccessKey,
     bucketName,
+    region,
     endpoint,
   };
 
@@ -56,15 +54,19 @@ const getS3Client = (): S3Client => {
     return cachedClient;
   }
 
-  const config = getR2Config();
+  const config = getB2Config();
 
+  // Backblaze B2 S3-compatible API (reuse AWS SDK).
+  // Avoid forcePathStyle + flexible checksums that commonly break B2 signatures.
   cachedClient = new S3Client({
-    region: "auto",
+    region: config.region,
     endpoint: config.endpoint,
     credentials: {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
     },
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
   });
 
   return cachedClient;
@@ -75,14 +77,13 @@ export const createPresignedUploadUrl = async (input: {
   mimeType: string;
   fileSize: number;
 }): Promise<{ uploadUrl: string; expiresIn: number }> => {
-  const config = getR2Config();
+  const config = getB2Config();
   const client = getS3Client();
   const expiresIn = getUploadUrlExpiresInSeconds();
 
   const command = new PutObjectCommand({
     Bucket: config.bucketName,
     Key: input.storageKey,
-    ContentType: input.mimeType,
   });
 
   const uploadUrl = await getSignedUrl(client, command, { expiresIn });
@@ -94,7 +95,7 @@ export const createPresignedDownloadUrl = async (input: {
   storageKey: string;
   fileName: string;
 }): Promise<{ downloadUrl: string; expiresIn: number }> => {
-  const config = getR2Config();
+  const config = getB2Config();
   const client = getS3Client();
   const expiresIn = getDownloadUrlExpiresInSeconds();
 
@@ -110,7 +111,7 @@ export const createPresignedDownloadUrl = async (input: {
 };
 
 export const objectExists = async (storageKey: string): Promise<boolean> => {
-  const config = getR2Config();
+  const config = getB2Config();
   const client = getS3Client();
 
   try {
@@ -141,7 +142,7 @@ export const objectExists = async (storageKey: string): Promise<boolean> => {
 };
 
 export const deleteObject = async (storageKey: string): Promise<void> => {
-  const config = getR2Config();
+  const config = getB2Config();
   const client = getS3Client();
 
   try {

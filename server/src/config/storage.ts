@@ -21,11 +21,11 @@ export const getMaxFileSizeBytes = (): number => {
 };
 
 export const getUploadUrlExpiresInSeconds = (): number => {
-  const value = Number(process.env.R2_UPLOAD_URL_EXPIRES_IN || "300");
+  const value = Number(process.env.B2_UPLOAD_URL_EXPIRES_IN || "300");
   return Number.isFinite(value) && value > 0 ? value : 300;
 };
 
 export const getDownloadUrlExpiresInSeconds = (): number => {
-  const value = Number(process.env.R2_DOWNLOAD_URL_EXPIRES_IN || "300");
+  const value = Number(process.env.B2_DOWNLOAD_URL_EXPIRES_IN || "300");
   return Number.isFinite(value) && value > 0 ? value : 300;
 };

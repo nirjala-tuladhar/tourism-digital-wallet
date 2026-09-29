@@ -7,7 +7,7 @@ export type AttachmentAttrs = {
   fileName: string;
   mimeType: string;
   fileSize: number;
-  storageProvider: "r2";
+  storageProvider: "b2";
   storageKey: string;
   uploadedAt: Date;
   createdAt: Date;
@@ -54,8 +54,8 @@ const attachmentSchema = new Schema<AttachmentAttrs>(
     },
     storageProvider: {
       type: String,
-      enum: ["r2"],
-      default: "r2",
+      enum: ["b2"],
+      default: "b2",
       required: true,
     },
     storageKey: {

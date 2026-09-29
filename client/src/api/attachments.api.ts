@@ -9,7 +9,7 @@ export type Attachment = {
   fileName: string;
   mimeType: string;
   fileSize: number;
-  storageProvider: "r2";
+  storageProvider: "b2";
   uploadedAt: string;
   createdAt: string;
   updatedAt: string;

@@ -29,7 +29,7 @@ export type AttachmentResponse = {
   fileName: string;
   mimeType: string;
   fileSize: number;
-  storageProvider: "r2";
+  storageProvider: "b2";
   uploadedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -190,7 +190,7 @@ export const confirmAttachment = async (
       fileName: sanitizeDisplayFileName(input.fileName),
       mimeType: input.mimeType,
       fileSize: input.fileSize,
-      storageProvider: "r2",
+      storageProvider: "b2",
       storageKey: input.storageKey,
       uploadedAt: new Date(),
     });
