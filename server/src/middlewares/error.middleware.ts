@@ -18,6 +18,28 @@ export const errorMiddleware: ErrorRequestHandler = (
     return;
   }
 
+  if (
+    err instanceof SyntaxError &&
+    "status" in err &&
+    (err as { status?: number }).status === 400
+  ) {
+    res.status(400).json({
+      success: false,
+      message: "Invalid JSON request body",
+    });
+
+    return;
+  }
+
+  if (err instanceof SyntaxError && err.message.includes("JSON")) {
+    res.status(400).json({
+      success: false,
+      message: "Invalid JSON request body",
+    });
+
+    return;
+  }
+
   res.status(500).json({
     success: false,
     message: "Internal server error",
