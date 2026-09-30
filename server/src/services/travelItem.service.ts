@@ -1,3 +1,4 @@
+import { getExpirySnapshot, parseDateOnly } from "../config/expiry.js";
 import { AppError } from "../middlewares/AppError.js";
 import { TravelItem, type TravelItemDocument } from "../models/TravelItem.js";
 import { assertValidObjectId } from "../utils/auth.js";
@@ -15,11 +16,26 @@ export type TravelItemResponse = {
   category: string;
   description?: string;
   labels: string[];
+  expiresAt: string | null;
+  expiryStatus: "none" | "active" | "expiring_soon" | "expired";
+  daysUntilExpiry: number | null;
   createdAt: string;
   updatedAt: string;
 };
 
-const toTravelItemResponse = (item: TravelItemDocument): TravelItemResponse => ({
+const expiryFields = (expiresAt?: Date | null) => {
+  const snapshot = getExpirySnapshot(expiresAt ?? null);
+
+  return {
+    expiresAt: expiresAt ? expiresAt.toISOString() : null,
+    expiryStatus: snapshot.expiryStatus,
+    daysUntilExpiry: snapshot.daysUntilExpiry,
+  };
+};
+
+export const toTravelItemResponse = (
+  item: TravelItemDocument,
+): TravelItemResponse => ({
   id: String(item._id),
   userId: String(item.userId),
   tripId: String(item.tripId),
@@ -27,9 +43,21 @@ const toTravelItemResponse = (item: TravelItemDocument): TravelItemResponse => (
   category: item.category,
   description: item.description || undefined,
   labels: item.labels ?? [],
+  ...expiryFields(item.expiresAt),
   createdAt: item.createdAt.toISOString(),
   updatedAt: item.updatedAt.toISOString(),
 });
+
+const assignExpiry = (
+  item: TravelItemDocument,
+  expiresAt: string | null | undefined,
+): void => {
+  if (expiresAt === undefined) {
+    return;
+  }
+
+  item.expiresAt = expiresAt ? parseDateOnly(expiresAt) : null;
+};
 
 export const createTravelItem = async (
   tripId: string,
@@ -47,7 +75,11 @@ export const createTravelItem = async (
       ? input.description.trim()
       : undefined,
     labels: input.labels ?? [],
+    expiresAt: input.expiresAt ? parseDateOnly(input.expiresAt) : null,
   });
+
+  const { syncExpiryNotifications } = await import("./notification.service.js");
+  await syncExpiryNotifications(userId);
 
   return toTravelItemResponse(item);
 };
@@ -106,8 +138,13 @@ export const updateTravelItem = async (
         ? undefined
         : input.description.trim();
   }
+  assignExpiry(item, input.expiresAt);
 
   await item.save();
+
+  const { syncExpiryNotifications } = await import("./notification.service.js");
+  await syncExpiryNotifications(userId);
+
   return toTravelItemResponse(item);
 };
 
@@ -132,6 +169,10 @@ export const deleteTravelItem = async (
   const { deleteAttachmentsForTravelItem } = await import(
     "./attachment.service.js"
   );
+  const { deleteNotificationsForTravelItem } = await import(
+    "./notification.service.js"
+  );
   await deleteAttachmentsForTravelItem(String(item._id), userId);
+  await deleteNotificationsForTravelItem(String(item._id), userId);
   await item.deleteOne();
 };

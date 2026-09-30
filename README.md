@@ -98,4 +98,16 @@ cd client && npm install && npm run dev
 - Add B2 variables on **Render** (backend).
 - Frontend on Vercel only needs `VITE_API_URL`.
 - Keep the B2 bucket **private**; use signed URLs from the API.
-- Add your Vercel origin to the B2 bucket CORS rules for staging/production uploads.
+- Add your Vercel origin to the B2 bucket CORS rules for staging/production uploads. Use `https://*.vercel.app` so preview URLs work too.
+
+## Search, expiry, and notifications
+
+`GET /api/search` matches the signed-in user's trips and travel items. Words can come from different records: `Nepal hotel` finds a hotel item on a Nepal trip. Active trips rank first. Inactive trips stay in the results and are labeled.
+
+Travel items have an optional `expiresAt`. "Expiring soon" is within 30 days. Notifications use a unique key per user, item, expiry date, and window (30 days, 7 days, or expired), so a refresh does not insert another copy. Sync runs when the dashboard or notification list loads. The same function can move to a scheduled job later.
+
+- `GET /api/search`
+- `GET /api/notifications`
+- `PATCH /api/notifications/:id/read`
+- `POST /api/notifications/read-all`
+

@@ -1,9 +1,24 @@
+import { EXPIRING_SOON_DAYS, getExpirySnapshot } from "../config/expiry.js";
 import { ImportantDate } from "../models/ImportantDate.js";
 import { TravelItem } from "../models/TravelItem.js";
 import { Trip } from "../models/Trip.js";
+import { syncExpiryNotifications } from "./notification.service.js";
 import { toTripResponse, type TripResponse } from "./trip.service.js";
 import type { ImportantDateResponse } from "./importantDate.service.js";
-import type { TravelItemResponse } from "./travelItem.service.js";
+import {
+  toTravelItemResponse,
+  type TravelItemResponse,
+} from "./travelItem.service.js";
+
+export type UpcomingExpiration = {
+  travelItemId: string;
+  tripId: string;
+  title: string;
+  category: string;
+  tripLabel: string;
+  expiresAt: string;
+  daysUntilExpiry: number;
+};
 
 export type DashboardResponse = {
   stats: {
@@ -11,8 +26,10 @@ export type DashboardResponse = {
     upcomingTrips: number;
     travelItems: number;
   };
+  expiringSoonDays: number;
   upcomingTrips: TripResponse[];
   upcomingDates: ImportantDateResponse[];
+  upcomingExpirations: UpcomingExpiration[];
   recentItems: TravelItemResponse[];
 };
 
@@ -28,7 +45,9 @@ export const getDashboard = async (
 ): Promise<DashboardResponse> => {
   const today = startOfToday();
 
-  const [activeTrips, upcomingTripDocs, travelItems, upcomingDateDocs, recentItemDocs] =
+  await syncExpiryNotifications(userId);
+
+  const [activeTrips, upcomingTripDocs, travelItems, upcomingDateDocs, recentItemDocs, expiringItemDocs, activeTripDocs] =
     await Promise.all([
       Trip.countDocuments({ userId, status: "active" }),
       Trip.find({
@@ -46,6 +65,11 @@ export const getDashboard = async (
         .sort({ date: 1 })
         .limit(5),
       TravelItem.find({ userId }).sort({ updatedAt: -1 }).limit(5),
+      TravelItem.find({
+        userId,
+        expiresAt: { $type: "date" },
+      }).select("title category tripId expiresAt"),
+      Trip.find({ userId, status: "active" }).select("origin destination"),
     ]);
 
   const upcomingTripsCount = await Trip.countDocuments({
@@ -54,13 +78,58 @@ export const getDashboard = async (
     startDate: { $gte: today },
   });
 
+  const activeTripLabels = new Map(
+    activeTripDocs.map((trip) => [
+      String(trip._id),
+      `${trip.origin} → ${trip.destination}`,
+    ]),
+  );
+
+  const upcomingExpirations = expiringItemDocs
+    .flatMap((item) => {
+      if (!item.expiresAt) {
+        return [];
+      }
+
+      const tripLabel = activeTripLabels.get(String(item.tripId));
+
+      if (!tripLabel) {
+        return [];
+      }
+
+      const snapshot = getExpirySnapshot(item.expiresAt, today);
+
+      if (
+        snapshot.expiryStatus !== "expiring_soon" ||
+        snapshot.daysUntilExpiry === null
+      ) {
+        return [];
+      }
+
+      return [
+        {
+          travelItemId: String(item._id),
+          tripId: String(item.tripId),
+          title: item.title,
+          category: item.category,
+          tripLabel,
+          expiresAt: item.expiresAt.toISOString(),
+          daysUntilExpiry: snapshot.daysUntilExpiry,
+        },
+      ];
+    })
+    .sort((left, right) => left.daysUntilExpiry - right.daysUntilExpiry)
+    .slice(0, 4);
+
   return {
     stats: {
       activeTrips,
       upcomingTrips: upcomingTripsCount,
       travelItems,
     },
+    expiringSoonDays: EXPIRING_SOON_DAYS,
     upcomingTrips: upcomingTripDocs.map((trip) => toTripResponse(trip)),
+    upcomingExpirations,
     upcomingDates: upcomingDateDocs.map((entry) => ({
       id: String(entry._id),
       userId: String(entry.userId),
@@ -75,16 +144,6 @@ export const getDashboard = async (
       createdAt: entry.createdAt.toISOString(),
       updatedAt: entry.updatedAt.toISOString(),
     })),
-    recentItems: recentItemDocs.map((item) => ({
-      id: String(item._id),
-      userId: String(item.userId),
-      tripId: String(item.tripId),
-      title: item.title,
-      category: item.category,
-      description: item.description || undefined,
-      labels: item.labels ?? [],
-      createdAt: item.createdAt.toISOString(),
-      updatedAt: item.updatedAt.toISOString(),
-    })),
+    recentItems: recentItemDocs.map((item) => toTravelItemResponse(item)),
   };
 };

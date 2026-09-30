@@ -15,6 +15,8 @@ type TripDetailPanelProps = {
   onDeleted?: () => void;
   showBackButton?: boolean;
   onBack?: () => void;
+  focusItemId?: string | null;
+  onFocusCleared?: () => void;
 };
 
 export function TripDetailPanel({
@@ -22,6 +24,8 @@ export function TripDetailPanel({
   onDeleted,
   showBackButton = false,
   onBack,
+  focusItemId,
+  onFocusCleared,
 }: TripDetailPanelProps) {
   const navigate = useNavigate();
   const updateTrip = useUpdateTrip(trip.id);
@@ -99,7 +103,7 @@ export function TripDetailPanel({
               ) : (
                 <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               )}
-              {trip.status === "active" ? "Archive" : "Reactivate"}
+              {trip.status === "active" ? "Mark inactive" : "Mark active"}
             </button>
             <button
               type="button"
@@ -125,7 +129,11 @@ export function TripDetailPanel({
         ) : null}
       </div>
 
-      <TravelItemsSection tripId={trip.id} />
+      <TravelItemsSection
+        tripId={trip.id}
+        focusItemId={focusItemId}
+        onFocusCleared={onFocusCleared}
+      />
       <ImportantDatesSection tripId={trip.id} />
 
       <ConfirmDialog

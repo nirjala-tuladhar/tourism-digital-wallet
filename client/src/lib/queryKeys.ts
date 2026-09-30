@@ -6,4 +6,6 @@ export const queryKeys = {
   importantDates: (tripId: string) => ["trips", tripId, "dates"] as const,
   attachments: (tripId: string, travelItemId: string) =>
     ["trips", tripId, "items", travelItemId, "attachments"] as const,
+  search: (filters: unknown) => ["search", filters] as const,
+  notifications: ["notifications"] as const,
 };

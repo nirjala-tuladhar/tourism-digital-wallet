@@ -36,6 +36,8 @@ export function useCreateTravelItem(tripId: string) {
         queryClient.invalidateQueries({ queryKey: queryKeys.trip(tripId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.trips }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: ["search"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
       ]);
     },
   });
@@ -67,6 +69,8 @@ export function useUpdateTravelItem(tripId: string) {
           queryKey: queryKeys.travelItems(tripId),
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: ["search"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
       ]);
     },
   });
@@ -88,6 +92,8 @@ export function useDeleteTravelItem(tripId: string) {
         queryClient.invalidateQueries({ queryKey: queryKeys.trip(tripId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.trips }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: ["search"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
       ]);
     },
   });

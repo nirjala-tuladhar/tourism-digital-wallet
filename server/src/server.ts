@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.routes.js";
 import tripRoutes from "./routes/trip.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import attachmentRoutes from "./routes/attachment.routes.js";
+import searchRoutes from "./routes/search.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 import { corsOptions } from "./config/cors.js";
 import { connectDatabase } from "./config/database.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
@@ -26,6 +28,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/attachments", attachmentRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use(errorMiddleware);
 

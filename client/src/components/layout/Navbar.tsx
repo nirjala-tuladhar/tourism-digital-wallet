@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { authApi } from "../../api/auth.api";
+import { NotificationMenu } from "../notifications/NotificationMenu";
 import { clearCredentials } from "../../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 
@@ -27,6 +28,8 @@ export function Navbar() {
       <h1 className="text-xl font-semibold">Tourism Digital Wallet</h1>
 
       <div className="flex items-center gap-4">
+        {user ? <NotificationMenu /> : null}
+
         {user ? (
           <span className="hidden text-sm text-gray-600 sm:inline">
             {user.name}

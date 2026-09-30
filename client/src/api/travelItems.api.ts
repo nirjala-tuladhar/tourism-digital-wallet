@@ -1,4 +1,5 @@
 import { apiClient } from "./client";
+import type { ExpiryStatus } from "../lib/expiry";
 import type { ApiSuccessResponse } from "../types/api.types";
 
 export const TRAVEL_ITEM_CATEGORIES = [
@@ -22,6 +23,9 @@ export type TravelItem = {
   category: TravelItemCategory | string;
   description?: string;
   labels: string[];
+  expiresAt?: string | null;
+  expiryStatus?: ExpiryStatus;
+  daysUntilExpiry?: number | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -31,6 +35,7 @@ export type TravelItemPayload = {
   category: TravelItemCategory;
   description?: string;
   labels?: string[];
+  expiresAt?: string | null;
 };
 
 export const travelItemsApi = {

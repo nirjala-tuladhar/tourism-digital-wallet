@@ -14,6 +14,7 @@ import { ApiClientError } from "../api/client";
 import { useDashboard } from "../hooks/useDashboard";
 import { formatTripDate, formatTripRange } from "../lib/date";
 import { getCategoryMeta } from "../lib/travelCategories";
+import { WalletSearch } from "../components/search/WalletSearch";
 import { useAppSelector } from "../store/hooks";
 
 function greetingForNow(): string {
@@ -114,6 +115,8 @@ export function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <WalletSearch />
 
       <section className="grid gap-4 sm:grid-cols-3">
         {[
@@ -216,8 +219,58 @@ export function DashboardPage() {
           )}
         </div>
 
-        <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="text-lg font-semibold text-slate-900">Quick actions</h3>
+        <div className="space-y-4">
+          <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Upcoming Expirations
+            </h3>
+            {data.upcomingExpirations.length === 0 ? (
+              <div>
+                <p className="text-sm font-medium text-slate-800">You&apos;re all clear</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  No travel documents are expiring soon.
+                </p>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {data.upcomingExpirations.map((entry) => {
+                  const meta = getCategoryMeta(entry.category);
+                  const Icon = meta.icon;
+                  const dayLabel =
+                    entry.daysUntilExpiry === 0
+                      ? "Expires today"
+                      : entry.daysUntilExpiry === 1
+                        ? "Expires in 1 day"
+                        : `Expires in ${entry.daysUntilExpiry} days`;
+
+                  return (
+                    <li key={entry.travelItemId}>
+                      <Link
+                        to={`/trips?trip=${entry.tripId}&item=${entry.travelItemId}`}
+                        className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-amber-50/40 px-3 py-3 transition duration-200 hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md"
+                      >
+                        <div className={`rounded-xl p-2 ${meta.soft} ${meta.accent}`}>
+                          <Icon className="h-4 w-4" aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900">
+                            {entry.title}
+                          </p>
+                          <p className="text-xs text-amber-800">{dayLabel}</p>
+                          <p className="truncate text-xs text-slate-500">
+                            {entry.tripLabel}
+                          </p>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
+            <h3 className="text-lg font-semibold text-slate-900">Quick actions</h3>
           <div className="grid gap-3">
             <Link
               to="/trips/new"
@@ -231,6 +284,7 @@ export function DashboardPage() {
             >
               Browse all trips
             </Link>
+          </div>
           </div>
         </div>
       </section>
@@ -275,7 +329,7 @@ export function DashboardPage() {
                 return (
                   <li key={item.id}>
                     <Link
-                      to={`/trips?trip=${item.tripId}`}
+                      to={`/trips?trip=${item.tripId}&item=${item.id}`}
                       className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md"
                     >
                       <div className={`rounded-xl p-2 ${meta.soft} ${meta.accent}`}>
