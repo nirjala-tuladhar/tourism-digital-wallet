@@ -20,6 +20,7 @@ export type TravelItemAttrs = {
   category: TravelItemCategory;
   description?: string;
   labels: string[];
+  expiresAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -60,6 +61,10 @@ const travelItemSchema = new Schema<TravelItemAttrs>(
       type: [String],
       default: [],
     },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
@@ -67,6 +72,7 @@ const travelItemSchema = new Schema<TravelItemAttrs>(
 // Speeds up listing items for a trip owned by a user.
 travelItemSchema.index({ tripId: 1, userId: 1 });
 travelItemSchema.index({ userId: 1, createdAt: -1 });
+travelItemSchema.index({ userId: 1, expiresAt: 1 });
 
 export const TravelItem = mongoose.model<TravelItemAttrs>(
   "TravelItem",

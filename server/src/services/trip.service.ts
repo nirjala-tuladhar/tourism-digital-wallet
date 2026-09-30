@@ -163,10 +163,15 @@ export const deleteTrip = async (
     }
   }
 
+  const { deleteNotificationsForTrip } = await import(
+    "./notification.service.js"
+  );
+
   await Promise.all([
     Attachment.deleteMany({ tripId: trip._id, userId }),
     TravelItem.deleteMany({ tripId: trip._id, userId }),
     ImportantDate.deleteMany({ tripId: trip._id, userId }),
+    deleteNotificationsForTrip(String(trip._id), userId),
     trip.deleteOne(),
   ]);
 };

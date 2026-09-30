@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TRAVEL_ITEM_CATEGORIES } from "../models/TravelItem.js";
+import { optionalDateField } from "./date.validators.js";
 
 const emptyIfMissing = (value: unknown) =>
   value === undefined || value === null ? "" : value;
@@ -32,6 +33,7 @@ export const createTravelItemSchema = z.object({
     )
     .max(10, "You can add up to 10 labels")
     .optional(),
+  expiresAt: optionalDateField,
 });
 
 export const updateTravelItemSchema = z.object({
@@ -62,6 +64,7 @@ export const updateTravelItemSchema = z.object({
     )
     .max(10, "You can add up to 10 labels")
     .optional(),
+  expiresAt: optionalDateField,
 });
 
 export type CreateTravelItemInput = z.infer<typeof createTravelItemSchema>;

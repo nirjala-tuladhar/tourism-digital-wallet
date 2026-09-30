@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,7 +16,8 @@ import {
 } from "../../hooks/useTravelItems";
 import { useImportantDates } from "../../hooks/useImportantDates";
 import { getCategoryMeta } from "../../lib/travelCategories";
-import { relativeUpdatedAt } from "../../lib/date";
+import { expiryBadgeClass, formatExpiry, isReasonableExpiryDate } from "../../lib/expiry";
+import { relativeUpdatedAt, toDateInputValue } from "../../lib/date";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { EmptyState } from "../ui/EmptyState";
 import { FeedbackBanner } from "../ui/FeedbackBanner";
@@ -28,12 +29,18 @@ const itemSchema = z.object({
   category: z.enum(TRAVEL_ITEM_CATEGORIES),
   description: z.string().max(2000).optional(),
   labels: z.string().optional(),
+  expiresAt: z
+    .string()
+    .trim()
+    .refine(isReasonableExpiryDate, "Expiry date must be a valid date"),
 });
 
 type ItemFormValues = z.infer<typeof itemSchema>;
 
 type TravelItemsSectionProps = {
   tripId: string;
+  focusItemId?: string | null;
+  onFocusCleared?: () => void;
 };
 
 function parseLabels(value?: string): string[] {
@@ -45,7 +52,11 @@ function parseLabels(value?: string): string[] {
     .slice(0, 10);
 }
 
-export function TravelItemsSection({ tripId }: TravelItemsSectionProps) {
+export function TravelItemsSection({
+  tripId,
+  focusItemId,
+  onFocusCleared,
+}: TravelItemsSectionProps) {
   const { data: items, isLoading, isError, error } = useTravelItems(tripId);
   const { data: dates } = useImportantDates(tripId);
   const createItem = useCreateTravelItem(tripId);
@@ -71,6 +82,7 @@ export function TravelItemsSection({ tripId }: TravelItemsSectionProps) {
       category: "Flight",
       description: "",
       labels: "",
+      expiresAt: "",
     },
   });
 
@@ -83,6 +95,7 @@ export function TravelItemsSection({ tripId }: TravelItemsSectionProps) {
       category: "Flight",
       description: "",
       labels: "",
+      expiresAt: "",
     });
     setShowForm(true);
   };
@@ -101,6 +114,7 @@ export function TravelItemsSection({ tripId }: TravelItemsSectionProps) {
         : "Other") as (typeof TRAVEL_ITEM_CATEGORIES)[number],
       description: item.description ?? "",
       labels: item.labels.join(", "),
+      expiresAt: item.expiresAt ? toDateInputValue(item.expiresAt) : "",
     });
     setShowForm(true);
   };
@@ -112,6 +126,7 @@ export function TravelItemsSection({ tripId }: TravelItemsSectionProps) {
       category: values.category,
       description: values.description?.trim() || undefined,
       labels: parseLabels(values.labels),
+      expiresAt: values.expiresAt?.trim() ? values.expiresAt : null,
     };
 
     try {
@@ -138,6 +153,18 @@ export function TravelItemsSection({ tripId }: TravelItemsSectionProps) {
     viewingItem && dates
       ? dates.filter((entry) => entry.travelItemId === viewingItem.id)
       : [];
+
+  useEffect(() => {
+    if (!focusItemId || !items) {
+      return;
+    }
+
+    const match = items.find((item) => item.id === focusItemId);
+
+    if (match) {
+      setViewingItem(match);
+    }
+  }, [focusItemId, items]);
 
   return (
     <section className="space-y-4">
@@ -211,6 +238,22 @@ export function TravelItemsSection({ tripId }: TravelItemsSectionProps) {
                 className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
                 {...register("labels")}
               />
+            </div>
+
+            <div>
+              <label htmlFor="item-expires" className="mb-2 block text-sm font-medium">
+                Expiry date
+                <span className="ml-1 font-normal text-slate-500">(optional)</span>
+              </label>
+              <input
+                id="item-expires"
+                type="date"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                {...register("expiresAt")}
+              />
+              {errors.expiresAt ? (
+                <p className="mt-1 text-sm text-rose-600">{errors.expiresAt.message}</p>
+              ) : null}
             </div>
 
             <div className="sm:col-span-2">
@@ -336,6 +379,13 @@ export function TravelItemsSection({ tripId }: TravelItemsSectionProps) {
                     ) : (
                       <p className="mt-1 text-sm text-slate-400">No description</p>
                     )}
+                    {item.expiryStatus && item.expiryStatus !== "none" ? (
+                      <p
+                        className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${expiryBadgeClass(item.expiryStatus)}`}
+                      >
+                        {formatExpiry(item.expiryStatus, item.daysUntilExpiry ?? null)}
+                      </p>
+                    ) : null}
                     <p className="mt-2 text-xs text-slate-500">
                       {relativeUpdatedAt(item.updatedAt)}
                     </p>
@@ -392,7 +442,10 @@ export function TravelItemsSection({ tripId }: TravelItemsSectionProps) {
         item={viewingItem}
         relatedDates={relatedDates}
         open={Boolean(viewingItem)}
-        onClose={() => setViewingItem(null)}
+        onClose={() => {
+          setViewingItem(null);
+          onFocusCleared?.();
+        }}
         onEdit={openEdit}
       />
 

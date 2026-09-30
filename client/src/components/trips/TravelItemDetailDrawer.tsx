@@ -2,6 +2,7 @@ import { Pencil } from "lucide-react";
 import type { TravelItem } from "../../api/travelItems.api";
 import type { ImportantDate } from "../../api/importantDates.api";
 import { formatTripDate, relativeUpdatedAt } from "../../lib/date";
+import { expiryBadgeClass, formatExpiry } from "../../lib/expiry";
 import { getCategoryMeta } from "../../lib/travelCategories";
 import { Drawer } from "../ui/Drawer";
 import { TravelItemAttachmentsSection } from "./TravelItemAttachmentsSection";
@@ -87,6 +88,22 @@ export function TravelItemDetailDrawer({
             </div>
           ) : (
             <p className="mt-1 text-sm text-slate-500">No labels</p>
+          )}
+        </section>
+
+        <section>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Expiry
+          </h3>
+          {item.expiryStatus && item.expiryStatus !== "none" ? (
+            <p
+              className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${expiryBadgeClass(item.expiryStatus)}`}
+            >
+              {formatExpiry(item.expiryStatus, item.daysUntilExpiry ?? null)}
+              {item.expiresAt ? ` · ${formatTripDate(item.expiresAt)}` : ""}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-slate-500">No expiry date</p>
           )}
         </section>
 

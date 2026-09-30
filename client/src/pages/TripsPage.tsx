@@ -14,6 +14,7 @@ export function TripsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
   const selectedId = searchParams.get("trip");
+  const focusItemId = searchParams.get("item");
 
   const filtered = useMemo(() => {
     const list = trips ?? [];
@@ -81,10 +82,19 @@ export function TripsPage() {
     });
   };
 
+  const clearItemFocus = () => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("item");
+      return next;
+    });
+  };
+
   const clearSelection = () => {
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       next.delete("trip");
+      next.delete("item");
       return next;
     });
   };
@@ -262,6 +272,8 @@ export function TripsPage() {
           showBackButton
           onBack={clearSelection}
           onDeleted={clearSelection}
+          focusItemId={focusItemId}
+          onFocusCleared={clearItemFocus}
         />
       )}
     </div>
