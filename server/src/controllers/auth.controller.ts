@@ -1,13 +1,17 @@
 import type { NextFunction, Request, Response } from "express";
 import {
+  changeUserPassword,
   getUserById,
   loginUser,
   registerUser,
+  updateUserProfile,
 } from "../services/auth.service.js";
 import type { ApiSuccessResponse } from "../types/api.types.js";
 import {
+  changePasswordSchema,
   loginSchema,
   registerSchema,
+  updateProfileSchema,
 } from "../validators/auth.validators.js";
 import { AppError } from "../middlewares/AppError.js";
 
@@ -16,6 +20,7 @@ type AuthData = {
     id: string;
     name: string;
     email: string;
+    createdAt: string;
   };
   token: string;
 };
@@ -91,6 +96,67 @@ export const me = async (
     const response: ApiSuccessResponse<{ user: typeof user }> = {
       success: true,
       data: { user },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const parsed = updateProfileSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      throw new AppError(formatZodError(parsed.error), 400);
+    }
+
+    const user = await updateUserProfile(req.user.id, parsed.data.name);
+    const response: ApiSuccessResponse<{ user: typeof user }> = {
+      success: true,
+      data: { user },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user?.id) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const parsed = changePasswordSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      throw new AppError(formatZodError(parsed.error), 400);
+    }
+
+    await changeUserPassword(
+      req.user.id,
+      parsed.data.currentPassword,
+      parsed.data.newPassword,
+    );
+
+    const response: ApiSuccessResponse<{ message: string }> = {
+      success: true,
+      data: { message: "Password updated" },
     };
 
     res.status(200).json(response);

@@ -1,4 +1,5 @@
 import { EXPIRING_SOON_DAYS, getExpirySnapshot } from "../config/expiry.js";
+import { Attachment } from "../models/Attachment.js";
 import { ImportantDate } from "../models/ImportantDate.js";
 import { TravelItem } from "../models/TravelItem.js";
 import { Trip } from "../models/Trip.js";
@@ -22,9 +23,12 @@ export type UpcomingExpiration = {
 
 export type DashboardResponse = {
   stats: {
+    totalTrips: number;
     activeTrips: number;
     upcomingTrips: number;
     travelItems: number;
+    documents: number;
+    upcomingDates: number;
   };
   expiringSoonDays: number;
   upcomingTrips: TripResponse[];
@@ -47,8 +51,9 @@ export const getDashboard = async (
 
   await syncExpiryNotifications(userId);
 
-  const [activeTrips, upcomingTripDocs, travelItems, upcomingDateDocs, recentItemDocs, expiringItemDocs, activeTripDocs] =
+  const [totalTrips, activeTrips, upcomingTripDocs, travelItems, documents, upcomingDatesCount, upcomingDateDocs, recentItemDocs, expiringItemDocs, activeTripDocs] =
     await Promise.all([
+      Trip.countDocuments({ userId }),
       Trip.countDocuments({ userId, status: "active" }),
       Trip.find({
         userId,
@@ -58,6 +63,8 @@ export const getDashboard = async (
         .sort({ startDate: 1 })
         .limit(5),
       TravelItem.countDocuments({ userId }),
+      Attachment.countDocuments({ userId }),
+      ImportantDate.countDocuments({ userId, date: { $gte: today } }),
       ImportantDate.find({
         userId,
         date: { $gte: today },
@@ -123,9 +130,12 @@ export const getDashboard = async (
 
   return {
     stats: {
+      totalTrips,
       activeTrips,
       upcomingTrips: upcomingTripsCount,
       travelItems,
+      documents,
+      upcomingDates: upcomingDatesCount,
     },
     expiringSoonDays: EXPIRING_SOON_DAYS,
     upcomingTrips: upcomingTripDocs.map((trip) => toTripResponse(trip)),

@@ -11,7 +11,7 @@ export function NotFoundPage() {
 
       <Link
         to="/dashboard"
-        className="mt-6 text-sm font-medium text-teal-700 underline-offset-4 hover:underline"
+        className="mt-6 text-sm font-medium text-brand underline-offset-4 hover:underline"
       >
         Go to dashboard
       </Link>

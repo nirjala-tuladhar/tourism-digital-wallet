@@ -23,6 +23,7 @@ import { EmptyState } from "../ui/EmptyState";
 import { FeedbackBanner } from "../ui/FeedbackBanner";
 import { Skeleton } from "../ui/Skeleton";
 import { TravelItemDetailDrawer } from "./TravelItemDetailDrawer";
+import { useToast } from "../ui/ToastProvider";
 
 const itemSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(160),
@@ -69,6 +70,7 @@ export function TravelItemsSection({
   const [editingItem, setEditingItem] = useState<TravelItem | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TravelItem | null>(null);
+  const pushToast = useToast();
 
   const {
     register,
@@ -140,6 +142,7 @@ export function TravelItemsSection({
       }
       setShowForm(false);
       setEditingItem(null);
+      pushToast(editingItem ? "Travel item updated." : "Travel item added.");
     } catch (err) {
       setFormError(
         err instanceof ApiClientError
@@ -178,7 +181,7 @@ export function TravelItemsSection({
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-brand/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
           Add Travel Item
@@ -203,7 +206,7 @@ export function TravelItemsSection({
               </label>
               <input
                 id="item-title"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("title")}
               />
               {errors.title ? (
@@ -217,7 +220,7 @@ export function TravelItemsSection({
               </label>
               <select
                 id="item-category"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("category")}
               >
                 {TRAVEL_ITEM_CATEGORIES.map((category) => (
@@ -235,7 +238,7 @@ export function TravelItemsSection({
               <input
                 id="item-labels"
                 placeholder="business, confirmation"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("labels")}
               />
             </div>
@@ -248,7 +251,7 @@ export function TravelItemsSection({
               <input
                 id="item-expires"
                 type="date"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("expiresAt")}
               />
               {errors.expiresAt ? (
@@ -266,7 +269,7 @@ export function TravelItemsSection({
               <textarea
                 id="item-description"
                 rows={3}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("description")}
               />
             </div>
@@ -276,7 +279,7 @@ export function TravelItemsSection({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600 disabled:opacity-70"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-70"
             >
               {isSubmitting ? (
                 <>
@@ -324,12 +327,12 @@ export function TravelItemsSection({
       {!isLoading && !isError && (items?.length ?? 0) === 0 ? (
         <EmptyState
           title="No travel items yet"
-          description="Add your first flight, hotel, visa, or other travel information."
+          description="Add flights, hotels, visas, insurance, and other travel information."
           action={
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               Add Travel Item
@@ -350,7 +353,7 @@ export function TravelItemsSection({
               className={`relative rounded-2xl border bg-white p-4 shadow-sm transition duration-200 ${
                 selected
                   ? `border-teal-300 ring-2 ${meta.ring} shadow-md`
-                  : "border-slate-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md"
+                  : "border-slate-200 hover:-translate-y-0.5 hover:border-brand/20 hover:shadow-md"
               }`}
             >
               <button
@@ -402,7 +405,7 @@ export function TravelItemsSection({
                       current === item.id ? null : item.id,
                     );
                   }}
-                  className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+                  className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   aria-label={`Actions for ${item.title}`}
                   aria-expanded={menuItemId === item.id}
                 >
@@ -461,6 +464,7 @@ export function TravelItemsSection({
           if (!deleteTarget) return;
           await deleteItem.mutateAsync(deleteTarget.id);
           setDeleteTarget(null);
+          pushToast("Travel item deleted.");
           if (viewingItem?.id === deleteTarget.id) {
             setViewingItem(null);
           }

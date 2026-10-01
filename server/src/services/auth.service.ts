@@ -7,6 +7,7 @@ export type AuthUser = {
   id: string;
   name: string;
   email: string;
+  createdAt: string;
 };
 
 export type AuthResult = {
@@ -30,11 +31,20 @@ const getJwtExpiresIn = (): string => {
   return process.env.JWT_EXPIRES_IN || "7d";
 };
 
-const toAuthUser = (user: UserDocument): AuthUser => ({
-  id: String(user._id),
-  name: user.name,
-  email: user.email,
-});
+const toAuthUser = (user: UserDocument): AuthUser => {
+  const createdAt = user.get("createdAt");
+
+  if (!(createdAt instanceof Date)) {
+    throw new Error("User createdAt is missing");
+  }
+
+  return {
+    id: String(user._id),
+    name: user.name,
+    email: user.email,
+    createdAt: createdAt.toISOString(),
+  };
+};
 
 export const signAuthToken = (userId: string): string => {
   return jwt.sign({ sub: userId }, getJwtSecret(), {
@@ -110,4 +120,41 @@ export const getUserById = async (userId: string): Promise<AuthUser> => {
   }
 
   return toAuthUser(user);
+};
+
+export const updateUserProfile = async (
+  userId: string,
+  name: string,
+): Promise<AuthUser> => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  user.name = name;
+  await user.save();
+
+  return toAuthUser(user);
+};
+
+export const changeUserPassword = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> => {
+  const user = await User.findById(userId).select("+password");
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const matches = await user.comparePassword(currentPassword);
+
+  if (!matches) {
+    throw new AppError("Current password is incorrect", 400);
+  }
+
+  user.password = newPassword;
+  await user.save();
 };

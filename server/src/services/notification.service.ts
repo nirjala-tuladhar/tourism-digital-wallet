@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import {
-  EXPIRING_SOON_DAYS,
-  EXPIRING_URGENT_DAYS,
   getExpirySnapshot,
+  selectExpiryReminder,
+  type ExpiryReminderKind,
 } from "../config/expiry.js";
 import { AppError } from "../middlewares/AppError.js";
 import {
@@ -23,6 +23,7 @@ export type NotificationResponse = {
   relatedTravelItemId?: string;
   read: boolean;
   createdAt: string;
+  tripLabel?: string;
   metadata?: {
     expiresAt?: string;
     daysUntilExpiry?: number;
@@ -34,8 +35,17 @@ export type NotificationListResponse = {
   unreadCount: number;
 };
 
+const REMINDER_TYPE: Record<ExpiryReminderKind, NotificationType> = {
+  soon: "expiry_soon",
+  urgent: "expiry_urgent",
+  day: "expiry_day",
+  today: "expiry_today",
+  expired: "expiry_expired",
+};
+
 const toNotificationResponse = (
   notification: NotificationDocument,
+  tripLabel?: string,
 ): NotificationResponse => ({
   id: String(notification._id),
   type: notification.type,
@@ -49,6 +59,7 @@ const toNotificationResponse = (
     : undefined,
   read: notification.read,
   createdAt: notification.createdAt.toISOString(),
+  tripLabel,
   metadata: notification.metadata
     ? {
         expiresAt: notification.metadata.expiresAt,
@@ -63,22 +74,17 @@ const isDuplicateKey = (error: unknown): boolean =>
   "code" in error &&
   (error as { code?: number }).code === 11000;
 
-const reminderWindow = (
-  daysUntilExpiry: number,
-): { type: NotificationType; dedupeSuffix: string } | null => {
-  if (daysUntilExpiry < 0) {
-    return { type: "expiry_expired", dedupeSuffix: "expired" };
+const reminderWindow = (daysUntilExpiry: number) => {
+  const reminder = selectExpiryReminder(daysUntilExpiry);
+
+  if (!reminder) {
+    return null;
   }
 
-  if (daysUntilExpiry <= EXPIRING_URGENT_DAYS) {
-    return { type: "expiry_urgent", dedupeSuffix: "7" };
-  }
-
-  if (daysUntilExpiry <= EXPIRING_SOON_DAYS) {
-    return { type: "expiry_soon", dedupeSuffix: "30" };
-  }
-
-  return null;
+  return {
+    type: REMINDER_TYPE[reminder.kind],
+    dedupeSuffix: reminder.dedupeSuffix,
+  };
 };
 
 /**
@@ -124,11 +130,15 @@ export const syncExpiryNotifications = async (userId: string): Promise<void> => 
     const message =
       snapshot.daysUntilExpiry < 0
         ? `Your ${item.title} has expired.`
-        : `Your ${item.title} expires in ${dayLabel}.`;
+        : snapshot.daysUntilExpiry === 0
+          ? `Your ${item.title} expires today.`
+          : `Your ${item.title} expires in ${dayLabel}.`;
     const title =
       snapshot.daysUntilExpiry < 0
         ? `${item.title} expired`
-        : `${item.title} expiring soon`;
+        : snapshot.daysUntilExpiry === 0
+          ? `${item.title} expires today`
+          : `${item.title} expiring soon`;
 
     try {
       await Notification.updateOne(
@@ -161,20 +171,46 @@ export const syncExpiryNotifications = async (userId: string): Promise<void> => 
   }
 };
 
+const tripLabelsFor = async (userId: string): Promise<Map<string, string>> => {
+  const trips = await Trip.find({ userId }).select("origin destination");
+
+  return new Map(
+    trips.map((trip) => [
+      String(trip._id),
+      `${trip.origin} → ${trip.destination}`,
+    ]),
+  );
+};
+
 export const listNotifications = async (
   userId: string,
 ): Promise<NotificationListResponse> => {
   await syncExpiryNotifications(userId);
 
-  const [notifications, unreadCount] = await Promise.all([
+  const [notifications, unreadCount, labels] = await Promise.all([
     Notification.find({ userId }).sort({ createdAt: -1 }).limit(30),
     Notification.countDocuments({ userId, read: false }),
+    tripLabelsFor(userId),
   ]);
 
   return {
-    notifications: notifications.map(toNotificationResponse),
+    notifications: notifications.map((notification) =>
+      toNotificationResponse(
+        notification,
+        notification.relatedTripId
+          ? labels.get(String(notification.relatedTripId))
+          : undefined,
+      ),
+    ),
     unreadCount,
   };
+};
+
+export const countUnreadNotifications = async (
+  userId: string,
+): Promise<{ unreadCount: number }> => {
+  const unreadCount = await Notification.countDocuments({ userId, read: false });
+  return { unreadCount };
 };
 
 export const markNotificationRead = async (
@@ -193,7 +229,14 @@ export const markNotificationRead = async (
     throw new AppError("Notification not found", 404);
   }
 
-  return toNotificationResponse(notification);
+  const labels = await tripLabelsFor(userId);
+
+  return toNotificationResponse(
+    notification,
+    notification.relatedTripId
+      ? labels.get(String(notification.relatedTripId))
+      : undefined,
+  );
 };
 
 export const markAllNotificationsRead = async (
@@ -205,6 +248,22 @@ export const markAllNotificationsRead = async (
   );
 
   return { updated: result.modifiedCount };
+};
+
+export const deleteNotification = async (
+  notificationId: string,
+  userId: string,
+): Promise<void> => {
+  assertValidObjectId(notificationId, "Notification");
+
+  const notification = await Notification.findOneAndDelete({
+    _id: notificationId,
+    userId,
+  });
+
+  if (!notification) {
+    throw new AppError("Notification not found", 404);
+  }
 };
 
 export const deleteNotificationsForTrip = async (

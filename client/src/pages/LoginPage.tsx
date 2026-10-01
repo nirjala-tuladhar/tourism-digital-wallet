@@ -25,7 +25,11 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const expired =
+    (location.state as { reason?: string } | null)?.reason === "expired";
+  const [formError, setFormError] = useState<string | null>(
+    expired ? "Your session has expired. Please sign in again." : null,
+  );
 
   const fromPath =
     (location.state as { from?: { pathname?: string } } | null)?.from
@@ -74,7 +78,7 @@ export function LoginPage() {
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid w-full gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <section className="hidden lg:block">
-            <div className="inline-flex items-center gap-3 rounded-full border border-teal-200/20 bg-white/5 px-4 py-2 backdrop-blur">
+            <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/5 px-4 py-2 backdrop-blur">
               <Wallet className="h-5 w-5 text-teal-200" aria-hidden="true" />
               <span className="text-sm font-medium tracking-wide text-teal-50">
                 Tourism Digital Wallet

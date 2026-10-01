@@ -12,6 +12,24 @@ export class ApiClientError extends Error {
   }
 }
 
+let onUnauthorized: (() => void) | null = null;
+
+export const setUnauthorizedHandler = (handler: (() => void) | null): void => {
+  onUnauthorized = handler;
+};
+
+const friendlyErrorMessage = (status: number, message: string, hadToken: boolean): string => {
+  if (status === 401 && hadToken) {
+    return "Your session has expired. Please sign in again.";
+  }
+
+  if (status >= 500 || message === "Internal server error" || message.startsWith("Request failed")) {
+    return "Something went wrong. Please try again.";
+  }
+
+  return message;
+};
+
 type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
@@ -64,7 +82,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   if (!response.ok) {
-    const message =
+    const rawMessage =
       payload &&
       typeof payload === "object" &&
       "message" in payload &&
@@ -72,7 +90,14 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
         ? (payload as ApiErrorResponse).message
         : `Request failed (${response.status})`;
 
-    throw new ApiClientError(message, response.status);
+    if (response.status === 401 && token) {
+      onUnauthorized?.();
+    }
+
+    throw new ApiClientError(
+      friendlyErrorMessage(response.status, rawMessage, Boolean(token)),
+      response.status,
+    );
   }
 
   return payload as T;

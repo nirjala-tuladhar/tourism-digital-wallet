@@ -24,6 +24,7 @@ import { formatTripDate } from "../../lib/date";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { FeedbackBanner } from "../ui/FeedbackBanner";
 import { Skeleton } from "../ui/Skeleton";
+import { useToast } from "../ui/ToastProvider";
 
 type TravelItemAttachmentsSectionProps = {
   tripId: string;
@@ -54,6 +55,7 @@ export function TravelItemAttachmentsSection({
   const [actionError, setActionError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Attachment | null>(null);
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const pushToast = useToast();
 
   const handleFilesSelected = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) {
@@ -78,6 +80,12 @@ export function TravelItemAttachmentsSection({
           message: result.message,
         })),
       );
+      const uploadedCount = results.filter((result) => result.status === "uploaded").length;
+      if (uploadedCount === 1) {
+        pushToast("Attachment uploaded successfully.");
+      } else if (uploadedCount > 1) {
+        pushToast(`${uploadedCount} attachments uploaded successfully.`);
+      }
     } catch (err) {
       setActionError(
         err instanceof ApiClientError
@@ -134,7 +142,7 @@ export function TravelItemAttachmentsSection({
           />
           <label
             htmlFor={inputId}
-            className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-teal-200 hover:shadow-md focus-within:outline-none focus-within:ring-2 focus-within:ring-teal-600 ${
+            className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-brand/20 hover:shadow-md focus-within:outline-none focus-within:ring-2 focus-within:ring-brand ${
               uploadMutation.isPending ? "pointer-events-none opacity-60" : ""
             }`}
           >
@@ -202,7 +210,7 @@ export function TravelItemAttachmentsSection({
           <button
             type="button"
             onClick={() => refetch()}
-            className="text-sm font-medium text-teal-700 hover:underline"
+            className="text-sm font-medium text-brand hover:underline"
           >
             Try again
           </button>
@@ -211,14 +219,13 @@ export function TravelItemAttachmentsSection({
 
       {!isLoading && !isError && (data?.length ?? 0) === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-6 text-center">
-          <p className="font-medium text-slate-800">No attachments yet</p>
+          <p className="font-medium text-slate-800">No attachments</p>
           <p className="mt-1 text-sm text-slate-500">
-            Upload your travel documents, confirmations, tickets, images, or
-            other files here.
+            Upload PDFs, images, or other travel documents.
           </p>
           <label
             htmlFor={inputId}
-            className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600"
+            className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             <Upload className="h-4 w-4" aria-hidden="true" />
             Upload files
@@ -234,7 +241,7 @@ export function TravelItemAttachmentsSection({
           return (
             <li
               key={attachment.id}
-              className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-teal-200 hover:shadow-md"
+              className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-brand/20 hover:shadow-md"
             >
               <div className="flex items-start gap-3">
                 <div className="rounded-xl bg-slate-100 p-2 text-slate-600">
@@ -268,7 +275,7 @@ export function TravelItemAttachmentsSection({
                       type="button"
                       onClick={() => openAttachment(attachment)}
                       disabled={openMutation.isPending}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
                     >
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                       Open
@@ -306,6 +313,7 @@ export function TravelItemAttachmentsSection({
           try {
             await deleteMutation.mutateAsync(deleteTarget.id);
             setDeleteTarget(null);
+            pushToast("Attachment deleted.");
             setPreviewUrls((current) => {
               const next = { ...current };
               delete next[deleteTarget.id];

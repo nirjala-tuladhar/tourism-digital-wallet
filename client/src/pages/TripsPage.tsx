@@ -123,7 +123,7 @@ export function TripsPage() {
 
         <Link
           to="/trips/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
           New Trip
@@ -133,7 +133,7 @@ export function TripsPage() {
       <label className="relative block">
         <span className="sr-only">Search trips</span>
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-500"
           aria-hidden="true"
         />
         <input
@@ -141,7 +141,7 @@ export function TripsPage() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search trips..."
-          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm shadow-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
         />
       </label>
 
@@ -166,7 +166,7 @@ export function TripsPage() {
           <button
             type="button"
             onClick={() => refetch()}
-            className="text-sm font-medium text-teal-700 hover:underline"
+            className="text-sm font-medium text-brand hover:underline"
           >
             Try again
           </button>
@@ -176,11 +176,11 @@ export function TripsPage() {
       {!isLoading && !isError && (trips?.length ?? 0) === 0 ? (
         <EmptyState
           title="No trips yet"
-          description="Your travel plans will appear here once you create your first trip."
+          description="Create your first trip to start organizing your travel."
           action={
             <Link
               to="/trips/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               Create Your First Trip
@@ -241,7 +241,7 @@ export function TripsPage() {
     <div className="min-h-[28rem]">
       {!selectedId ? (
         <div className="flex h-full min-h-[28rem] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white px-6 text-center shadow-inner">
-          <div className="rounded-2xl bg-teal-50 p-3 text-teal-700">
+          <div className="rounded-2xl bg-brand/10 p-3 text-brand">
             <MapPin className="h-6 w-6" aria-hidden="true" />
           </div>
           <h3 className="mt-4 text-lg font-semibold text-slate-900">
@@ -269,8 +269,6 @@ export function TripsPage() {
       ) : (
         <TripDetailPanel
           trip={selectedTrip}
-          showBackButton
-          onBack={clearSelection}
           onDeleted={clearSelection}
           focusItemId={focusItemId}
           onFocusCleared={clearItemFocus}
@@ -281,9 +279,7 @@ export function TripsPage() {
 
   return (
     <div className="lg:grid lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] lg:gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-      <div className={`${selectedId ? "hidden lg:block" : "block"}`}>
-        {listPane}
-      </div>
+      <div>{listPane}</div>
 
       <div className={`${selectedId ? "block" : "hidden lg:block"}`}>
         {detailPane}

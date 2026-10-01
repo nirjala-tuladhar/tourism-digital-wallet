@@ -1,8 +1,48 @@
-/** Days before expiry when an item is "expiring soon" and can raise a reminder. */
-export const EXPIRING_SOON_DAYS = 30;
+/**
+ * Reminder windows, largest first. Each window is stored once per item and expiry date.
+ * Day 0 ("expires today") and already-expired items are separate events.
+ */
+export const EXPIRY_REMINDER_DAYS = [30, 7, 1] as const;
 
-/** A tighter reminder so the 30-day and 7-day events stay distinct. */
-export const EXPIRING_URGENT_DAYS = 7;
+/** Dashboard "expiring soon" uses the widest reminder window. */
+export const EXPIRING_SOON_DAYS = Math.max(...EXPIRY_REMINDER_DAYS);
+
+export type ExpiryReminderKind = "soon" | "urgent" | "day" | "today" | "expired";
+
+export type ExpiryReminder = {
+  kind: ExpiryReminderKind;
+  dedupeSuffix: string;
+};
+
+export const selectExpiryReminder = (
+  daysUntilExpiry: number,
+): ExpiryReminder | null => {
+  if (daysUntilExpiry < 0) {
+    return { kind: "expired", dedupeSuffix: "expired" };
+  }
+
+  if (daysUntilExpiry === 0) {
+    return { kind: "today", dedupeSuffix: "0" };
+  }
+
+  const window = [...EXPIRY_REMINDER_DAYS]
+    .sort((left, right) => left - right)
+    .find((day) => daysUntilExpiry <= day);
+
+  if (window === undefined) {
+    return null;
+  }
+
+  if (window <= 1) {
+    return { kind: "day", dedupeSuffix: String(window) };
+  }
+
+  if (window <= 7) {
+    return { kind: "urgent", dedupeSuffix: String(window) };
+  }
+
+  return { kind: "soon", dedupeSuffix: String(window) };
+};
 
 export type ExpiryStatus = "none" | "active" | "expiring_soon" | "expired";
 

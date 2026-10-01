@@ -91,7 +91,7 @@ export function TripForm({
           autoComplete="off"
           disabled={isSubmitting}
           aria-invalid={errors.name ? "true" : "false"}
-          className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:opacity-60"
+          className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:opacity-60"
           {...register("name")}
         />
         {errors.name ? (
@@ -111,7 +111,7 @@ export function TripForm({
             type="text"
             disabled={isSubmitting}
             aria-invalid={errors.origin ? "true" : "false"}
-            className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:opacity-60"
+            className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:opacity-60"
             {...register("origin")}
           />
           {errors.origin ? (
@@ -133,7 +133,7 @@ export function TripForm({
             type="text"
             disabled={isSubmitting}
             aria-invalid={errors.destination ? "true" : "false"}
-            className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:opacity-60"
+            className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:opacity-60"
             {...register("destination")}
           />
           {errors.destination ? (
@@ -157,7 +157,7 @@ export function TripForm({
             type="date"
             disabled={isSubmitting}
             aria-invalid={errors.startDate ? "true" : "false"}
-            className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:opacity-60"
+            className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:opacity-60"
             {...register("startDate")}
           />
           {errors.startDate ? (
@@ -179,7 +179,7 @@ export function TripForm({
             type="date"
             disabled={isSubmitting}
             aria-invalid={errors.endDate ? "true" : "false"}
-            className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:opacity-60"
+            className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:opacity-60"
             {...register("endDate")}
           />
           {errors.endDate ? (
@@ -201,7 +201,7 @@ export function TripForm({
           id="description"
           rows={4}
           disabled={isSubmitting}
-          className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200 disabled:opacity-60"
+          className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:opacity-60"
           {...register("description")}
         />
         {errors.description ? (
@@ -214,7 +214,7 @@ export function TripForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
       >
         {isSubmitting ? (
           <>

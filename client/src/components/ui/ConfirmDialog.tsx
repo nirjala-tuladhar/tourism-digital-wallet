@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 type ConfirmDialogProps = {
   open: boolean;
   title: string;
@@ -21,6 +23,27 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    cancelRef.current?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !busy) {
+        onCancelRef.current();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, busy]);
+
   if (!open) {
     return null;
   }
@@ -54,10 +77,11 @@ export function ConfirmDialog({
 
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
+            ref={cancelRef}
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 disabled:opacity-60"
+            className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
           >
             {cancelLabel}
           </button>
@@ -68,7 +92,7 @@ export function ConfirmDialog({
             className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-60 ${
               destructive
                 ? "bg-rose-600 hover:bg-rose-500 focus-visible:ring-rose-600"
-                : "bg-teal-700 hover:bg-teal-600 focus-visible:ring-teal-700"
+                : "bg-brand hover:bg-brand-dark focus-visible:ring-brand"
             }`}
           >
             {busy ? "Working..." : confirmLabel}

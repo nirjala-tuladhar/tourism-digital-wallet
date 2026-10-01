@@ -57,9 +57,9 @@ const categoryMeta: Record<TravelItemCategory, CategoryMeta> = {
   Activity: {
     icon: Tent,
     label: "Activity",
-    accent: "text-teal-700",
-    soft: "bg-teal-50",
-    ring: "ring-teal-200",
+    accent: "text-brand",
+    soft: "bg-brand/10",
+    ring: "ring-brand/25",
   },
   Document: {
     icon: FileText,

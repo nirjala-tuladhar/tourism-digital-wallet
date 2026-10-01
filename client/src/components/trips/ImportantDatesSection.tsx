@@ -120,7 +120,7 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
           Add Date
@@ -145,7 +145,7 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
               </label>
               <input
                 id="date-title"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("title")}
               />
               {errors.title ? (
@@ -160,7 +160,7 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
               <input
                 id="date-value"
                 type="date"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("date")}
               />
               {errors.date ? (
@@ -174,7 +174,7 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
               </label>
               <select
                 id="date-type"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("type")}
               >
                 {IMPORTANT_DATE_TYPES.map((type) => (
@@ -195,7 +195,7 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
               <textarea
                 id="date-description"
                 rows={3}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("description")}
               />
             </div>
@@ -205,7 +205,7 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600 disabled:opacity-70"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-70"
             >
               {isSubmitting ? (
                 <>
@@ -258,7 +258,7 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               Add Date
@@ -293,7 +293,7 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
                 <button
                   type="button"
                   onClick={() => openEdit(entry)}
-                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   aria-label={`Edit ${entry.title}`}
                 >
                   <Pencil className="h-4 w-4" />

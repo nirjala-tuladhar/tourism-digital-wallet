@@ -44,7 +44,7 @@ export function expiryBadgeClass(status: ExpiryStatus): string {
   }
 
   if (status === "active") {
-    return "bg-teal-50 text-teal-800";
+    return "bg-brand/10 text-brand-dark";
   }
 
   return "bg-slate-100 text-slate-600";

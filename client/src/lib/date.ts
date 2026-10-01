@@ -34,6 +34,29 @@ export function isPastDate(value: string): boolean {
   return date < today;
 }
 
+export function formatRelativeTime(value: string): string {
+  const date = new Date(value);
+  const diffMs = Date.now() - date.getTime();
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const minutes = Math.floor(diffMs / (1000 * 60));
+
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return minutes === 1 ? "1 minute ago" : `${minutes} minutes ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days} days ago`;
+
+  return formatTripDate(value);
+}
+
 export function relativeUpdatedAt(value: string): string {
   const date = new Date(value);
   const diffMs = Date.now() - date.getTime();

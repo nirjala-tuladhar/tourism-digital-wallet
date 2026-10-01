@@ -104,10 +104,12 @@ cd client && npm install && npm run dev
 
 `GET /api/search` matches the signed-in user's trips and travel items. Words can come from different records: `Nepal hotel` finds a hotel item on a Nepal trip. Active trips rank first. Inactive trips stay in the results and are labeled.
 
-Travel items have an optional `expiresAt`. "Expiring soon" is within 30 days. Notifications use a unique key per user, item, expiry date, and window (30 days, 7 days, or expired), so a refresh does not insert another copy. Sync runs when the dashboard or notification list loads. The same function can move to a scheduled job later.
+Travel items have an optional `expiresAt`. "Expiring soon" is the widest reminder window (30 days). Notifications are stored once per user, item, expiry date, and window (`30`, `7`, `1`, today, or expired), so a refresh does not insert another copy. Sync runs when the dashboard or notification list loads. The same function can move to a scheduled job later.
 
 - `GET /api/search`
 - `GET /api/notifications`
+- `GET /api/notifications/unread-count`
 - `PATCH /api/notifications/:id/read`
-- `POST /api/notifications/read-all`
+- `PATCH /api/notifications/read-all`
+- `DELETE /api/notifications/:id`
 

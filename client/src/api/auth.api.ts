@@ -5,6 +5,7 @@ export type AuthUser = {
   id: string;
   name: string;
   email: string;
+  createdAt?: string;
 };
 
 export type AuthPayload = {
@@ -46,6 +47,23 @@ export const authApi = {
     apiClient.post<ApiSuccessResponse<{ message: string }>>(
       "/api/auth/logout",
       undefined,
+      token,
+    ),
+
+  updateProfile: (name: string, token: string) =>
+    apiClient.patch<ApiSuccessResponse<{ user: AuthUser }>>(
+      "/api/auth/profile",
+      { name },
+      token,
+    ),
+
+  changePassword: (
+    payload: { currentPassword: string; newPassword: string },
+    token: string,
+  ) =>
+    apiClient.patch<ApiSuccessResponse<{ message: string }>>(
+      "/api/auth/password",
+      payload,
       token,
     ),
 };

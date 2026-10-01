@@ -8,4 +8,5 @@ export const queryKeys = {
     ["trips", tripId, "items", travelItemId, "attachments"] as const,
   search: (filters: unknown) => ["search", filters] as const,
   notifications: ["notifications"] as const,
+  profile: ["profile"] as const,
 };

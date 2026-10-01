@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import {
+  countUnreadNotifications,
+  deleteNotification,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
@@ -42,6 +44,44 @@ export const markNotificationReadHandler = async (
     const response: ApiSuccessResponse<NotificationResponse> = {
       success: true,
       data: notification,
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const unreadCountHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = requireUserId(req.user?.id);
+    const data = await countUnreadNotifications(userId);
+    const response: ApiSuccessResponse<{ unreadCount: number }> = {
+      success: true,
+      data,
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteNotificationHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = requireUserId(req.user?.id);
+    await deleteNotification(String(req.params.id), userId);
+    const response: ApiSuccessResponse<{ message: string }> = {
+      success: true,
+      data: { message: "Notification deleted" },
     };
 
     res.status(200).json(response);

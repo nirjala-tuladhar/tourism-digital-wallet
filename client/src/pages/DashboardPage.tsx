@@ -2,9 +2,12 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight,
   CalendarDays,
+  FileText,
+  FileUp,
   MapPinned,
   Package,
   Plus,
+  Search,
   Sparkles,
 } from "lucide-react";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -14,7 +17,6 @@ import { ApiClientError } from "../api/client";
 import { useDashboard } from "../hooks/useDashboard";
 import { formatTripDate, formatTripRange } from "../lib/date";
 import { getCategoryMeta } from "../lib/travelCategories";
-import { WalletSearch } from "../components/search/WalletSearch";
 import { useAppSelector } from "../store/hooks";
 
 function greetingForNow(): string {
@@ -32,10 +34,12 @@ export function DashboardPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-36 rounded-3xl" />
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Skeleton className="h-32 rounded-3xl" />
-          <Skeleton className="h-32 rounded-3xl" />
-          <Skeleton className="h-32 rounded-3xl" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
         </div>
         <Skeleton className="h-48 rounded-3xl" />
       </div>
@@ -56,7 +60,7 @@ export function DashboardPage() {
         <button
           type="button"
           onClick={() => refetch()}
-          className="text-sm font-medium text-teal-700 hover:underline"
+          className="text-sm font-medium text-brand hover:underline"
         >
           Try again
         </button>
@@ -65,98 +69,108 @@ export function DashboardPage() {
   }
 
   const hasAnyContent =
-    data.stats.activeTrips > 0 ||
+    data.stats.totalTrips > 0 ||
     data.stats.travelItems > 0 ||
     data.upcomingDates.length > 0;
 
+  const stats = [
+    {
+      label: "Total Trips",
+      value: data.stats.totalTrips,
+      hint: "Your saved journeys",
+      icon: MapPinned,
+      iconClass: "bg-emerald-100 text-emerald-700",
+      to: "/trips",
+    },
+    {
+      label: "Active Trips",
+      value: data.stats.activeTrips,
+      hint: "Currently in your wallet",
+      icon: Sparkles,
+      iconClass: "bg-sky-100 text-sky-700",
+      to: "/trips",
+    },
+    {
+      label: "Travel Items",
+      value: data.stats.travelItems,
+      hint: "Flights, hotels, and more",
+      icon: Package,
+      iconClass: "bg-violet-100 text-violet-700",
+      to: "/trips",
+    },
+    {
+      label: "Documents",
+      value: data.stats.documents,
+      hint: "Stored travel documents",
+      icon: FileText,
+      iconClass: "bg-amber-100 text-amber-700",
+      to: "/search",
+    },
+    {
+      label: "Upcoming",
+      value: data.stats.upcomingDates,
+      hint: "Important dates ahead",
+      icon: CalendarDays,
+      iconClass: "bg-rose-100 text-rose-700",
+      to: "/trips",
+    },
+  ];
+
   return (
     <div className="space-y-6 lg:space-y-8">
-      <section className="relative overflow-hidden rounded-3xl border border-teal-100 bg-gradient-to-br from-[#0f4c5c] via-[#146878] to-[#1a8a7a] p-6 text-white shadow-lg sm:p-8">
+      <section className="relative overflow-hidden rounded-3xl bg-[#062a33] p-6 text-white shadow-sm sm:p-8">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(45,212,191,0.35),_transparent_55%),radial-gradient(ellipse_at_bottom_left,_rgba(14,116,144,0.55),_transparent_50%)]"
         />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-20 left-10 h-48 w-48 rounded-full bg-teal-200/20 blur-2xl"
-        />
-
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-xl">
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-teal-50 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              Tourism Digital Wallet
-            </p>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               {greetingForNow()}
               {user?.name ? `, ${user.name.split(" ")[0]}` : ""}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-teal-50/85 sm:text-base">
-              Your trips, dates, and travel essentials — organized in one calm
-              place.
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/90 sm:text-base">
+              Keep your travel plans, documents, and important dates organized in one place.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
               to="/trips/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-teal-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-teal-300 px-4 py-2.5 text-sm font-semibold text-[#04343f] shadow-sm transition hover:bg-teal-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
-              New Trip
+              Create Trip
             </Link>
             <Link
               to="/trips"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/40 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
-              Open Trips
+              View Trips
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </div>
       </section>
 
-      <WalletSearch />
-
-      <section className="grid gap-4 sm:grid-cols-3">
-        {[
-          {
-            label: "Active Trips",
-            value: data.stats.activeTrips,
-            icon: MapPinned,
-            tone: "from-teal-50 to-white",
-          },
-          {
-            label: "Upcoming Trips",
-            value: data.stats.upcomingTrips,
-            icon: CalendarDays,
-            tone: "from-sky-50 to-white",
-          },
-          {
-            label: "Travel Items",
-            value: data.stats.travelItems,
-            icon: Package,
-            tone: "from-cyan-50 to-white",
-          },
-        ].map((stat) => {
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <article
+            <Link
               key={stat.label}
-              className={`rounded-3xl border border-slate-200/80 bg-gradient-to-br ${stat.tone} p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md`}
+              to={stat.to}
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand/25 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm text-slate-500">{stat.label}</p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-                    {stat.value}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white/80 p-2.5 text-teal-700 shadow-sm">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </div>
+                <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                <span className={`rounded-xl p-2 ${stat.iconClass}`}>
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
               </div>
-            </article>
+              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{stat.value}</p>
+              <p className="mt-1 text-xs text-slate-500">{stat.hint}</p>
+            </Link>
           );
         })}
       </section>
@@ -168,7 +182,7 @@ export function DashboardPage() {
           action={
             <Link
               to="/trips/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               Create Your First Trip
@@ -180,12 +194,15 @@ export function DashboardPage() {
       <section className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
         <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-lg font-semibold text-slate-900">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                <MapPinned className="h-4 w-4" aria-hidden="true" />
+              </span>
               Upcoming Trips
             </h3>
             <Link
               to="/trips"
-              className="text-sm font-medium text-teal-700 transition hover:text-teal-800"
+              className="text-sm font-medium text-brand transition hover:text-brand-dark"
             >
               View all
             </Link>
@@ -199,7 +216,7 @@ export function DashboardPage() {
                 <Link
                   key={trip.id}
                   to={`/trips?trip=${trip.id}`}
-                  className="group flex flex-col gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50/80 to-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+                  className="group flex flex-col gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50/80 to-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-brand/20 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
                     <h4 className="truncate font-semibold text-slate-900">
@@ -209,7 +226,7 @@ export function DashboardPage() {
                       {formatTripRange(trip.startDate, trip.endDate)}
                     </p>
                   </div>
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal-700">
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-brand">
                     View
                     <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                   </span>
@@ -221,7 +238,10 @@ export function DashboardPage() {
 
         <div className="space-y-4">
           <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-            <h3 className="text-lg font-semibold text-slate-900">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              </span>
               Upcoming Expirations
             </h3>
             {data.upcomingExpirations.length === 0 ? (
@@ -270,19 +290,47 @@ export function DashboardPage() {
           </div>
 
           <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-            <h3 className="text-lg font-semibold text-slate-900">Quick actions</h3>
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
+                <Search className="h-4 w-4" aria-hidden="true" />
+              </span>
+              Quick actions
+            </h3>
           <div className="grid gap-3">
             <Link
-              to="/trips/new"
-              className="rounded-2xl border border-teal-100 bg-teal-50/70 px-4 py-3 text-sm font-medium text-teal-900 transition hover:bg-teal-50"
+              to="/search"
+              className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-900 transition hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-              Plan a new trip
+              <Search className="h-4 w-4 text-violet-600" aria-hidden="true" />
+              Search and filter
+            </Link>
+            <Link
+              to="/trips/new"
+              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <Plus className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+              Create trip
             </Link>
             <Link
               to="/trips"
-              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 transition hover:bg-slate-100"
+              className="inline-flex items-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-medium text-sky-900 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-              Browse all trips
+              <Package className="h-4 w-4 text-sky-600" aria-hidden="true" />
+              Add travel item
+            </Link>
+            <Link
+              to="/trips"
+              className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <FileUp className="h-4 w-4 text-amber-600" aria-hidden="true" />
+              Upload document
+            </Link>
+            <Link
+              to="/trips"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <MapPinned className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+              View trips
             </Link>
           </div>
           </div>
@@ -291,7 +339,10 @@ export function DashboardPage() {
 
       <section className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="text-lg font-semibold text-slate-900">
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
+            </span>
             Upcoming Important Dates
           </h3>
           {data.upcomingDates.length === 0 ? (
@@ -301,7 +352,7 @@ export function DashboardPage() {
               {data.upcomingDates.map((entry) => (
                 <li
                   key={entry.id}
-                  className="rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-4 py-3 transition hover:border-teal-200"
+                  className="rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-4 py-3 transition hover:border-brand/20"
                 >
                   <p className="text-sm font-semibold text-slate-900">
                     {formatTripDate(entry.date)}
@@ -315,7 +366,10 @@ export function DashboardPage() {
         </div>
 
         <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="text-lg font-semibold text-slate-900">
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+              <Package className="h-4 w-4" aria-hidden="true" />
+            </span>
             Recent Travel Items
           </h3>
           {data.recentItems.length === 0 ? (
@@ -330,7 +384,7 @@ export function DashboardPage() {
                   <li key={item.id}>
                     <Link
                       to={`/trips?trip=${item.tripId}&item=${item.id}`}
-                      className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md"
+                      className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 transition duration-200 hover:-translate-y-0.5 hover:border-brand/20 hover:shadow-md"
                     >
                       <div className={`rounded-xl p-2 ${meta.soft} ${meta.accent}`}>
                         <Icon className="h-4 w-4" aria-hidden="true" />
