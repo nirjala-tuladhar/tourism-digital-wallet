@@ -2,17 +2,24 @@ services:
   backend:
     build:
       context: ./server
+      dockerfile: Dockerfile
     container_name: tourism-wallet-backend
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
+
     env_file:
       - ./server/.env
 
   frontend:
     build:
       context: ./client
+      dockerfile: Dockerfile
+
     container_name: tourism-wallet-frontend
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     depends_on:
       - backend
+
+    env_file:
+      - ./client/.env
