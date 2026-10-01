@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { TripForm, type TripFormValues } from "../components/trips/TripForm";
 import { FeedbackBanner } from "../components/ui/FeedbackBanner";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ApiClientError } from "../api/client";
 import { useTrip, useUpdateTrip } from "../hooks/useTrips";
+import { useToast } from "../components/ui/ToastProvider";
 
 export function EditTripPage() {
   const { tripId } = useParams();
   const navigate = useNavigate();
   const { data: trip, isLoading, isError, error } = useTrip(tripId);
   const updateTrip = useUpdateTrip(tripId ?? "");
+  const pushToast = useToast();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const handleSubmit = async (values: TripFormValues) => {
@@ -24,6 +26,7 @@ export function EditTripPage() {
         description: values.description?.trim() || undefined,
       });
       navigate(`/trips?trip=${tripId}`, { replace: true });
+      pushToast("Trip updated successfully.");
     } catch (error) {
       setServerError(
         error instanceof ApiClientError
@@ -53,9 +56,6 @@ export function EditTripPage() {
               : "Trip not found."
           }
         />
-        <Link to="/trips" className="text-sm font-medium text-teal-700 hover:underline">
-          Back to Trips
-        </Link>
       </div>
     );
   }
@@ -63,13 +63,7 @@ export function EditTripPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <Link
-          to={`/trips?trip=${trip.id}`}
-          className="text-sm font-medium text-teal-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
-        >
-          ← Back to Trip
-        </Link>
-        <h2 className="mt-3 text-2xl font-semibold text-slate-900">Edit trip</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Edit trip</h2>
         <p className="mt-1 text-sm text-slate-600">
           Update destinations, dates, or notes for this trip.
         </p>

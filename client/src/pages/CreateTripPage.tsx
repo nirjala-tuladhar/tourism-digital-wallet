@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { TripForm, type TripFormValues } from "../components/trips/TripForm";
 import { ApiClientError } from "../api/client";
 import { useCreateTrip } from "../hooks/useTrips";
+import { useToast } from "../components/ui/ToastProvider";
 
 export function CreateTripPage() {
   const navigate = useNavigate();
   const createTrip = useCreateTrip();
+  const pushToast = useToast();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const handleSubmit = async (values: TripFormValues) => {
@@ -18,6 +20,7 @@ export function CreateTripPage() {
         description: values.description?.trim() || undefined,
       });
       navigate(`/trips?trip=${trip.id}`, { replace: true });
+      pushToast("Trip created successfully.");
     } catch (error) {
       setServerError(
         error instanceof ApiClientError
@@ -30,13 +33,7 @@ export function CreateTripPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <Link
-          to="/trips"
-          className="text-sm font-medium text-teal-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
-        >
-          ← Back to Trips
-        </Link>
-        <h2 className="mt-3 text-2xl font-semibold text-slate-900">
+        <h2 className="text-2xl font-semibold text-slate-900">
           Create a new trip
         </h2>
         <p className="mt-1 text-sm text-slate-600">

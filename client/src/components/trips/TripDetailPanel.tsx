@@ -9,12 +9,11 @@ import { ImportantDatesSection } from "./ImportantDatesSection";
 import { TravelItemsSection } from "./TravelItemsSection";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { FeedbackBanner } from "../ui/FeedbackBanner";
+import { useToast } from "../ui/ToastProvider";
 
 type TripDetailPanelProps = {
   trip: Trip;
   onDeleted?: () => void;
-  showBackButton?: boolean;
-  onBack?: () => void;
   focusItemId?: string | null;
   onFocusCleared?: () => void;
 };
@@ -22,8 +21,6 @@ type TripDetailPanelProps = {
 export function TripDetailPanel({
   trip,
   onDeleted,
-  showBackButton = false,
-  onBack,
   focusItemId,
   onFocusCleared,
 }: TripDetailPanelProps) {
@@ -32,6 +29,7 @@ export function TripDetailPanel({
   const deleteTrip = useDeleteTrip();
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const pushToast = useToast();
 
   const archiveTrip = async () => {
     setActionError(null);
@@ -39,6 +37,9 @@ export function TripDetailPanel({
       await updateTrip.mutateAsync({
         status: trip.status === "active" ? "inactive" : "active",
       });
+      pushToast(
+        trip.status === "active" ? "Trip marked inactive." : "Trip marked active.",
+      );
     } catch (err) {
       setActionError(
         err instanceof ApiClientError
@@ -50,20 +51,10 @@ export function TripDetailPanel({
 
   return (
     <div className="space-y-8">
-      {showBackButton ? (
-        <button
-          type="button"
-          onClick={onBack}
-          className="text-sm font-medium text-teal-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
-        >
-          ← Back to Trips
-        </button>
-      ) : null}
-
       <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-teal-50/40 p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">
               Selected trip
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
@@ -76,7 +67,7 @@ export function TripDetailPanel({
             <span
               className={`mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                 trip.status === "active"
-                  ? "bg-teal-50 text-teal-800"
+                  ? "bg-brand/10 text-brand-dark"
                   : "bg-slate-100 text-slate-600"
               }`}
             >
@@ -87,21 +78,21 @@ export function TripDetailPanel({
           <div className="flex flex-wrap gap-2">
             <Link
               to={`/trips/${trip.id}/edit`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+              <Pencil className="h-3.5 w-3.5 text-sky-600" aria-hidden="true" />
               Edit
             </Link>
             <button
               type="button"
               onClick={archiveTrip}
               disabled={updateTrip.isPending}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
             >
               {trip.status === "active" ? (
-                <Archive className="h-3.5 w-3.5" aria-hidden="true" />
+                <Archive className="h-3.5 w-3.5 text-amber-600" aria-hidden="true" />
               ) : (
-                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                <RotateCcw className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
               )}
               {trip.status === "active" ? "Mark inactive" : "Mark active"}
             </button>
@@ -148,6 +139,7 @@ export function TripDetailPanel({
           try {
             await deleteTrip.mutateAsync(trip.id);
             setConfirmDelete(false);
+            pushToast("Trip deleted.");
             onDeleted?.();
             navigate("/trips", { replace: true });
           } catch (err) {

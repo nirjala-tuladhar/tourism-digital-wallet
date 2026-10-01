@@ -3,11 +3,17 @@ import type { ApiSuccessResponse } from "../types/api.types";
 
 export type AppNotification = {
   id: string;
-  type: "expiry_soon" | "expiry_urgent" | "expiry_expired";
+  type:
+    | "expiry_soon"
+    | "expiry_urgent"
+    | "expiry_day"
+    | "expiry_today"
+    | "expiry_expired";
   title: string;
   message: string;
   relatedTripId?: string;
   relatedTravelItemId?: string;
+  tripLabel?: string;
   read: boolean;
   createdAt: string;
   metadata?: {
@@ -36,9 +42,15 @@ export const notificationsApi = {
     ),
 
   markAllRead: (token: string) =>
-    apiClient.post<ApiSuccessResponse<{ updated: number }>>(
+    apiClient.patch<ApiSuccessResponse<{ updated: number }>>(
       "/api/notifications/read-all",
       {},
+      token,
+    ),
+
+  remove: (id: string, token: string) =>
+    apiClient.delete<ApiSuccessResponse<{ message: string }>>(
+      `/api/notifications/${id}`,
       token,
     ),
 };

@@ -16,9 +16,12 @@ export type UpcomingExpiration = {
 
 export type DashboardData = {
   stats: {
+    totalTrips: number;
     activeTrips: number;
     upcomingTrips: number;
     travelItems: number;
+    documents: number;
+    upcomingDates: number;
   };
   expiringSoonDays: number;
   upcomingTrips: Trip[];

@@ -38,7 +38,7 @@ export function TravelItemDetailDrawer({
         <button
           type="button"
           onClick={() => onEdit(item)}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
           Edit

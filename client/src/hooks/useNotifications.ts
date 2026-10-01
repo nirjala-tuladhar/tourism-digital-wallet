@@ -31,6 +31,20 @@ export function useMarkNotificationRead() {
   });
 }
 
+export function useDeleteNotification() {
+  const queryClient = useQueryClient();
+  const token = useAppSelector((state) => state.auth.token)!;
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await notificationsApi.remove(id, token);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+    },
+  });
+}
+
 export function useMarkAllNotificationsRead() {
   const queryClient = useQueryClient();
   const token = useAppSelector((state) => state.auth.token)!;

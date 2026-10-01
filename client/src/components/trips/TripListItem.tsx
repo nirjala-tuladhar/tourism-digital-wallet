@@ -15,16 +15,16 @@ export function TripListItem({ trip, selected = false, onSelect }: TripListItemP
       type="button"
       onClick={() => onSelect(trip.id)}
       aria-pressed={selected}
-      className={`group w-full rounded-2xl border p-4 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 ${
+      className={`group w-full rounded-2xl border p-4 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
         selected
-          ? "border-teal-400 bg-gradient-to-br from-teal-50 to-white shadow-md ring-1 ring-teal-200"
-          : "border-slate-200 bg-white shadow-sm hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md"
+          ? "border-teal-400 bg-gradient-to-br from-brand/5 to-white shadow-md ring-1 ring-brand/25"
+          : "border-slate-200 bg-white shadow-sm hover:-translate-y-0.5 hover:border-brand/20 hover:shadow-md"
       }`}
     >
       <div className="flex items-start gap-3">
         <span
           className={`mt-1 h-10 w-1 shrink-0 rounded-full transition ${
-            selected ? "bg-teal-500" : "bg-slate-200 group-hover:bg-teal-300"
+            selected ? "bg-brand" : "bg-slate-200 group-hover:bg-brand/40"
           }`}
           aria-hidden="true"
         />
@@ -35,7 +35,7 @@ export function TripListItem({ trip, selected = false, onSelect }: TripListItemP
             <span
               className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
                 trip.status === "active"
-                  ? "bg-teal-50 text-teal-800"
+                  ? "bg-brand/10 text-brand-dark"
                   : "bg-slate-100 text-slate-600"
               }`}
             >

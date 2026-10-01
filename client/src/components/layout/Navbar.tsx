@@ -1,49 +1,41 @@
-import { useNavigate } from "react-router-dom";
-import { authApi } from "../../api/auth.api";
+import { useLocation } from "react-router-dom";
+import { Wallet } from "lucide-react";
 import { NotificationMenu } from "../notifications/NotificationMenu";
-import { clearCredentials } from "../../store/authSlice";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { UserMenu } from "./UserMenu";
+
+function sectionLabel(pathname: string): string {
+  if (pathname.startsWith("/trips/new")) return "New trip";
+  if (pathname.includes("/edit")) return "Edit trip";
+  if (pathname.startsWith("/trips")) return "Trips";
+  if (pathname.startsWith("/profile")) return "Profile";
+  if (pathname.startsWith("/search")) return "Search";
+  if (pathname.startsWith("/settings")) return "Settings";
+  return "Dashboard";
+}
 
 export function Navbar() {
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const user = useAppSelector((state) => state.auth.user);
-  const token = useAppSelector((state) => state.auth.token);
-
-  const handleLogout = async () => {
-    try {
-      if (token) {
-        await authApi.logout(token);
-      }
-    } catch {
-      // Clear local auth even if the network request fails.
-    } finally {
-      dispatch(clearCredentials());
-      navigate("/login", { replace: true });
-    }
-  };
+  const { pathname } = useLocation();
 
   return (
-    <nav className="flex h-16 items-center justify-between border-b px-6">
-      <h1 className="text-xl font-semibold">Tourism Digital Wallet</h1>
-
-      <div className="flex items-center gap-4">
-        {user ? <NotificationMenu /> : null}
-
-        {user ? (
-          <span className="hidden text-sm text-gray-600 sm:inline">
-            {user.name}
+    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+      <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#062a33] to-[#14b8a6] text-white shadow-sm">
+            <Wallet className="h-4 w-4" aria-hidden="true" />
           </span>
-        ) : null}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold tracking-tight text-slate-900 sm:text-base">
+              Tourism Digital Wallet
+            </p>
+            <p className="truncate text-xs text-slate-500">{sectionLabel(pathname)}</p>
+          </div>
+        </div>
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="rounded-md border px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
-        >
-          Log out
-        </button>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <NotificationMenu />
+          <UserMenu />
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }

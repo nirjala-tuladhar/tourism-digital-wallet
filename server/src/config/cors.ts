@@ -13,8 +13,21 @@ const getConfiguredOrigins = (): string[] => {
   ];
 };
 
-const isVercelPreviewOrigin = (origin: string): boolean => {
+const allowVercelPreviewOrigins = (): boolean => {
+  if (process.env.CORS_ALLOW_VERCEL === "true") {
+    return true;
+  }
+
   if (process.env.CORS_ALLOW_VERCEL === "false") {
+    return false;
+  }
+
+  // Unset: preview hosts are allowed outside production only.
+  return process.env.NODE_ENV !== "production";
+};
+
+const isVercelPreviewOrigin = (origin: string): boolean => {
+  if (!allowVercelPreviewOrigins()) {
     return false;
   }
 

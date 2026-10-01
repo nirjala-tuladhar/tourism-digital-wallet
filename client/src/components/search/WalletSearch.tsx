@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LoaderCircle, Search, X } from "lucide-react";
+import { LoaderCircle, Search, SlidersHorizontal, X } from "lucide-react";
 import { ApiClientError } from "../../api/client";
 import {
   TRAVEL_ITEM_CATEGORIES,
@@ -80,17 +80,22 @@ export function WalletSearch() {
 
   return (
     <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex flex-col gap-1">
-        <h3 className="text-lg font-semibold text-slate-900">Search your wallet</h3>
-        <p className="text-sm text-slate-500">
-          Find trips and travel items together. Active trips stay at the top.
-        </p>
+      <div className="flex items-start gap-3">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+          <Search className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-semibold text-slate-900">Search and filter</h3>
+          <p className="text-sm text-slate-500">
+            Find trips and travel items together. Active trips stay at the top.
+          </p>
+        </div>
       </div>
 
       <label className="relative mt-4 block">
         <span className="sr-only">Search trips and travel items</span>
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-500"
           aria-hidden="true"
         />
         <input
@@ -103,13 +108,13 @@ export function WalletSearch() {
             }
           }}
           placeholder="Try Nepal hotel, visa, Qatar Airways..."
-          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm shadow-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm shadow-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
         />
         {query ? (
           <button
             type="button"
             onClick={() => setQuery("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             aria-label="Clear search"
           >
             <X className="h-4 w-4" />
@@ -117,6 +122,12 @@ export function WalletSearch() {
         ) : null}
       </label>
 
+      <div className="mt-4 flex items-center gap-2 text-sm font-medium text-slate-700">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+          <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+        </span>
+        Filters
+      </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {STATUS_OPTIONS.map((option) => {
           const selected = tripStatus === option.value;
@@ -129,7 +140,7 @@ export function WalletSearch() {
               onClick={() => setTripStatus(option.value)}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                 selected
-                  ? "bg-teal-700 text-white shadow-sm"
+                  ? "bg-brand text-white shadow-sm"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
@@ -144,7 +155,7 @@ export function WalletSearch() {
           onChange={(event) =>
             setCategory(event.target.value as TravelItemCategory | "")
           }
-          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
         >
           <option value="">All types</option>
           {TRAVEL_ITEM_CATEGORIES.map((itemCategory) => (
@@ -158,7 +169,7 @@ export function WalletSearch() {
           aria-label="Expiry"
           value={expiry}
           onChange={(event) => setExpiry(event.target.value as SearchExpiryFilter)}
-          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
         >
           {EXPIRY_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -175,7 +186,7 @@ export function WalletSearch() {
             type="date"
             value={dateFrom}
             onChange={(event) => setDateFrom(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
           />
         </label>
         <label className="text-xs font-medium text-slate-500">
@@ -184,7 +195,7 @@ export function WalletSearch() {
             type="date"
             value={dateTo}
             onChange={(event) => setDateTo(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
           />
         </label>
       </div>
@@ -218,7 +229,7 @@ export function WalletSearch() {
             <button
               type="button"
               onClick={() => search.refetch()}
-              className="text-sm font-medium text-teal-700 hover:underline"
+              className="text-sm font-medium text-brand hover:underline"
             >
               Try again
             </button>
@@ -251,7 +262,7 @@ export function WalletSearch() {
                     <button
                       type="button"
                       onClick={() => openResult(result.tripId, result.travelItemId)}
-                      className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-4 py-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+                      className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-4 py-3 text-left transition duration-200 hover:-translate-y-0.5 hover:border-brand/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                     >
                       <div className={`rounded-xl p-2 ${meta.soft} ${meta.accent}`}>
                         <Icon className="h-4 w-4" aria-hidden="true" />
@@ -270,7 +281,7 @@ export function WalletSearch() {
                           <span
                             className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                               result.tripStatus === "active"
-                                ? "bg-teal-50 text-teal-800"
+                                ? "bg-brand/10 text-brand-dark"
                                 : "bg-slate-100 text-slate-600"
                             }`}
                           >

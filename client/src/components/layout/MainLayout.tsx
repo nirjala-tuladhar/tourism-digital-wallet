@@ -9,15 +9,16 @@ type MainLayoutProps = {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#f7f7fb] text-slate-900">
       <Navbar />
-      <MobileNav />
 
       <div className="flex">
         <Sidebar />
 
-        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-4 pb-24 sm:p-6 md:pb-6">{children}</main>
       </div>
+
+      <MobileNav />
     </div>
   );
 }

@@ -3,6 +3,8 @@ import mongoose, { HydratedDocument, Schema, Types } from "mongoose";
 export const NOTIFICATION_TYPES = [
   "expiry_soon",
   "expiry_urgent",
+  "expiry_day",
+  "expiry_today",
   "expiry_expired",
 ] as const;
 

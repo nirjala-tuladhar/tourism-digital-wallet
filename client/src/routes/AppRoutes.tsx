@@ -1,4 +1,8 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { setUnauthorizedHandler } from "../api/client";
+import { clearCredentials } from "../store/authSlice";
+import { useAppDispatch } from "../store/hooks";
 import { MainLayout } from "../components/layout/MainLayout";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { PublicOnlyRoute } from "../components/auth/PublicOnlyRoute";
@@ -9,20 +13,31 @@ import { NotFoundPage } from "../pages/NotFoundPage";
 import { TripsPage } from "../pages/TripsPage";
 import { CreateTripPage } from "../pages/CreateTripPage";
 import { EditTripPage } from "../pages/EditTripPage";
+import { ProfilePage } from "../pages/ProfilePage";
+import { SearchPage } from "../pages/SearchPage";
+import { SettingsPage } from "../pages/SettingsPage";
 import { TripDetailPage } from "../pages/TripDetailPage";
 
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div>
-      <h2 className="text-2xl font-semibold">{title}</h2>
-      <p className="mt-2 text-gray-600">This section is under development.</p>
-    </div>
-  );
+function SessionGuard() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      dispatch(clearCredentials());
+      navigate("/login", { replace: true, state: { reason: "expired" } });
+    });
+
+    return () => setUnauthorizedHandler(null);
+  }, [dispatch, navigate]);
+
+  return null;
 }
 
 export function AppRoutes() {
   return (
     <BrowserRouter>
+      <SessionGuard />
       <Routes>
         <Route element={<PublicOnlyRoute />}>
           <Route path="/login" element={<LoginPage />} />
@@ -78,28 +93,28 @@ export function AppRoutes() {
           />
 
           <Route
-            path="/documents"
+            path="/profile"
             element={
               <MainLayout>
-                <PlaceholderPage title="Documents" />
+                <ProfilePage />
               </MainLayout>
             }
           />
 
           <Route
-            path="/bookings"
+            path="/search"
             element={
               <MainLayout>
-                <PlaceholderPage title="Bookings" />
+                <SearchPage />
               </MainLayout>
             }
           />
 
           <Route
-            path="/itinerary"
+            path="/settings"
             element={
               <MainLayout>
-                <PlaceholderPage title="Itinerary" />
+                <SettingsPage />
               </MainLayout>
             }
           />
