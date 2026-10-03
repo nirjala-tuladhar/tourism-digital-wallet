@@ -3,6 +3,7 @@ import {
   ImportantDate,
   type ImportantDateDocument,
 } from "../models/ImportantDate.js";
+import { Notification } from "../models/Notification.js";
 import { TravelItem } from "../models/TravelItem.js";
 import { assertValidObjectId } from "../utils/auth.js";
 import { getOwnedTripOrThrow } from "./trip.service.js";
@@ -183,4 +184,9 @@ export const deleteImportantDate = async (
   if (!entry) {
     throw new AppError("Important date not found", 404);
   }
+
+  await Notification.deleteMany({
+    userId,
+    dedupeKey: { $regex: `^important-date:${dateId}:` },
+  });
 };

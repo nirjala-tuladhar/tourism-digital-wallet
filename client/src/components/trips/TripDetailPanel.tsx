@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Archive, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import type { Trip } from "../../api/trips.api";
+import { Ban, CheckCircle2, Pencil, Play, Trash2 } from "lucide-react";
+import type { Trip, TripStatus } from "../../api/trips.api";
 import { ApiClientError } from "../../api/client";
 import { formatTripRange } from "../../lib/date";
 import { useDeleteTrip, useUpdateTrip } from "../../hooks/useTrips";
 import { ImportantDatesSection } from "./ImportantDatesSection";
 import { TravelItemsSection } from "./TravelItemsSection";
+import { TripChecklist, TripPlanning } from "./TripPlanning";
 import { ConfirmDialog } from "../ui/ConfirmDialog";
 import { FeedbackBanner } from "../ui/FeedbackBanner";
 import { useToast } from "../ui/ToastProvider";
@@ -31,23 +32,36 @@ export function TripDetailPanel({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const pushToast = useToast();
 
-  const archiveTrip = async () => {
+  const setStatus = async (status: TripStatus, message: string) => {
     setActionError(null);
     try {
-      await updateTrip.mutateAsync({
-        status: trip.status === "active" ? "inactive" : "active",
-      });
-      pushToast(
-        trip.status === "active" ? "Trip marked inactive." : "Trip marked active.",
-      );
+      await updateTrip.mutateAsync({ status });
+      pushToast(message);
     } catch (err) {
       setActionError(
-        err instanceof ApiClientError
-          ? err.message
-          : "Unable to update trip status.",
+        err instanceof ApiClientError ? err.message : "Unable to update trip status.",
       );
     }
   };
+
+  const statusActions: Array<{ status: TripStatus; label: string; icon: typeof Play }> =
+    trip.status === "upcoming"
+      ? [
+          { status: "active", label: "Set active", icon: Play },
+          { status: "completed", label: "Mark completed", icon: CheckCircle2 },
+          { status: "cancelled", label: "Cancel trip", icon: Ban },
+        ]
+      : trip.status === "active"
+        ? [
+            { status: "completed", label: "Mark completed", icon: CheckCircle2 },
+            { status: "cancelled", label: "Cancel trip", icon: Ban },
+          ]
+        : trip.status === "completed"
+          ? [{ status: "cancelled", label: "Cancel trip", icon: Ban }]
+          : [
+              { status: "upcoming", label: "Mark upcoming", icon: Play },
+              { status: "active", label: "Set active", icon: Play },
+            ];
 
   return (
     <div className="space-y-8">
@@ -65,13 +79,17 @@ export function TripDetailPanel({
               {formatTripRange(trip.startDate, trip.endDate)}
             </p>
             <span
-              className={`mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+              className={`mt-3 inline-flex rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
                 trip.status === "active"
-                  ? "bg-brand/10 text-brand-dark"
-                  : "bg-slate-100 text-slate-600"
+                  ? "bg-emerald-100 text-emerald-800"
+                  : trip.status === "upcoming"
+                    ? "bg-sky-100 text-sky-800"
+                    : trip.status === "completed"
+                      ? "bg-teal-100 text-teal-800"
+                      : "bg-slate-100 text-slate-600"
               }`}
             >
-              {trip.status === "active" ? "Active" : "Inactive"}
+              {trip.status}
             </span>
           </div>
 
@@ -83,19 +101,21 @@ export function TripDetailPanel({
               <Pencil className="h-3.5 w-3.5 text-sky-600" aria-hidden="true" />
               Edit
             </Link>
-            <button
-              type="button"
-              onClick={archiveTrip}
-              disabled={updateTrip.isPending}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
-            >
-              {trip.status === "active" ? (
-                <Archive className="h-3.5 w-3.5 text-amber-600" aria-hidden="true" />
-              ) : (
-                <RotateCcw className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
-              )}
-              {trip.status === "active" ? "Mark inactive" : "Mark active"}
-            </button>
+            {statusActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.status}
+                  type="button"
+                  onClick={() => setStatus(action.status, `Trip marked ${action.status}.`)}
+                  disabled={updateTrip.isPending}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                >
+                  <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                  {action.label}
+                </button>
+              );
+            })}
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
@@ -120,12 +140,14 @@ export function TripDetailPanel({
         ) : null}
       </div>
 
+      <TripChecklist tripId={trip.id} />
       <TravelItemsSection
         tripId={trip.id}
         focusItemId={focusItemId}
         onFocusCleared={onFocusCleared}
       />
       <ImportantDatesSection tripId={trip.id} />
+      <TripPlanning tripId={trip.id} />
 
       <ConfirmDialog
         open={confirmDelete}

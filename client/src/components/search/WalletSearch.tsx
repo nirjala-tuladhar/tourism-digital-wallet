@@ -16,8 +16,10 @@ import { getCategoryMeta } from "../../lib/travelCategories";
 
 const STATUS_OPTIONS: Array<{ value: SearchTripStatus; label: string }> = [
   { value: "all", label: "All" },
+  { value: "upcoming", label: "Upcoming" },
   { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 const EXPIRY_OPTIONS: Array<{ value: SearchExpiryFilter; label: string }> = [
@@ -81,7 +83,7 @@ export function WalletSearch() {
   return (
     <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
       <div className="flex items-start gap-3">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-800">
           <Search className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="flex flex-col gap-1">
@@ -95,7 +97,7 @@ export function WalletSearch() {
       <label className="relative mt-4 block">
         <span className="sr-only">Search trips and travel items</span>
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-500"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-600"
           aria-hidden="true"
         />
         <input
@@ -286,8 +288,12 @@ export function WalletSearch() {
                             }`}
                           >
                             {result.tripStatus === "active"
-                              ? "Active Trip"
-                              : "Inactive Trip"}
+                              ? "Active trip"
+                              : result.tripStatus === "upcoming"
+                                ? "Upcoming trip"
+                                : result.tripStatus === "completed"
+                                  ? "Completed trip"
+                                  : "Cancelled trip"}
                           </span>
                           <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-500 ring-1 ring-slate-200">
                             {result.matchedOn === "trip" ? "Trip" : "Travel item"}

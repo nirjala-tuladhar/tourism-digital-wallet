@@ -1,6 +1,10 @@
 import { EXPIRING_SOON_DAYS, getExpirySnapshot } from "../config/expiry.js";
+import mongoose from "mongoose";
 import { Attachment } from "../models/Attachment.js";
+import { ChecklistItem } from "../models/ChecklistItem.js";
+import { Expense } from "../models/Expense.js";
 import { ImportantDate } from "../models/ImportantDate.js";
+import { ItineraryItem } from "../models/ItineraryItem.js";
 import { TravelItem } from "../models/TravelItem.js";
 import { Trip } from "../models/Trip.js";
 import { syncExpiryNotifications } from "./notification.service.js";
@@ -29,12 +33,41 @@ export type DashboardResponse = {
     travelItems: number;
     documents: number;
     upcomingDates: number;
+    completedTrips: number;
+    checklistCompleted: number;
+    checklistTotal: number;
   };
   expiringSoonDays: number;
   upcomingTrips: TripResponse[];
   upcomingDates: ImportantDateResponse[];
   upcomingExpirations: UpcomingExpiration[];
   recentItems: TravelItemResponse[];
+  importantItems: TravelItemResponse[];
+  recentExpenses: Array<{
+    id: string;
+    tripId: string;
+    amount: number;
+    currency: string;
+    category: string;
+    date: string;
+    description?: string;
+    tripLabel: string;
+  }>;
+  upcomingItinerary: Array<{
+    id: string;
+    tripId: string;
+    title: string;
+    date: string;
+    time?: string;
+    location?: string;
+    tripLabel: string;
+  }>;
+  openChecklist: Array<{
+    id: string;
+    tripId: string;
+    title: string;
+    tripLabel: string;
+  }>;
 };
 
 const startOfToday = (): Date => {
@@ -51,45 +84,37 @@ export const getDashboard = async (
 
   await syncExpiryNotifications(userId);
 
-  const [totalTrips, activeTrips, upcomingTripDocs, travelItems, documents, upcomingDatesCount, upcomingDateDocs, recentItemDocs, expiringItemDocs, activeTripDocs] =
+  const [totalTrips, activeTrips, upcomingTripsCount, completedTrips, upcomingTripDocs, travelItems, documents, upcomingDatesCount, upcomingDateDocs, recentItemDocs, importantItemDocs, expiringItemDocs, openTripDocs, checklistRows, openChecklistDocs, recentExpenseDocs, upcomingItineraryDocs] =
     await Promise.all([
       Trip.countDocuments({ userId }),
       Trip.countDocuments({ userId, status: "active" }),
-      Trip.find({
-        userId,
-        status: "active",
-        endDate: { $gte: today },
-      })
-        .sort({ startDate: 1 })
-        .limit(5),
+      Trip.countDocuments({ userId, status: "upcoming" }),
+      Trip.countDocuments({ userId, status: "completed" }),
+      Trip.find({ userId, status: "upcoming" }).sort({ startDate: 1 }).limit(5),
       TravelItem.countDocuments({ userId }),
       Attachment.countDocuments({ userId }),
       ImportantDate.countDocuments({ userId, date: { $gte: today } }),
-      ImportantDate.find({
-        userId,
-        date: { $gte: today },
-      })
-        .sort({ date: 1 })
-        .limit(5),
+      ImportantDate.find({ userId, date: { $gte: today } }).sort({ date: 1 }).limit(5),
       TravelItem.find({ userId }).sort({ updatedAt: -1 }).limit(5),
-      TravelItem.find({
-        userId,
-        expiresAt: { $type: "date" },
-      }).select("title category tripId expiresAt"),
-      Trip.find({ userId, status: "active" }).select("origin destination"),
+      TravelItem.find({ userId, important: true }).sort({ updatedAt: -1 }).limit(4),
+      TravelItem.find({ userId, expiresAt: { $type: "date" } }).select("title category tripId expiresAt"),
+      Trip.find({ userId }).select("origin destination status"),
+      ChecklistItem.aggregate<{ _id: boolean; count: number }>([
+        { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+        { $group: { _id: "$completed", count: { $sum: 1 } } },
+      ]),
+      ChecklistItem.find({ userId, completed: false }).sort({ position: 1, updatedAt: -1 }).limit(6),
+      Expense.find({ userId }).sort({ date: -1, createdAt: -1 }).limit(4),
+      ItineraryItem.find({ userId, date: { $gte: today } }).sort({ date: 1, time: 1 }).limit(4),
     ]);
 
-  const upcomingTripsCount = await Trip.countDocuments({
-    userId,
-    status: "active",
-    startDate: { $gte: today },
-  });
-
-  const activeTripLabels = new Map(
-    activeTripDocs.map((trip) => [
-      String(trip._id),
-      `${trip.origin} → ${trip.destination}`,
-    ]),
+  const tripLabels = new Map(
+    openTripDocs
+      .filter((trip) => trip.status === "upcoming" || trip.status === "active")
+      .map((trip) => [String(trip._id), `${trip.origin} → ${trip.destination}`] as const),
+  );
+  const allTripLabels = new Map(
+    openTripDocs.map((trip) => [String(trip._id), `${trip.origin} → ${trip.destination}`] as const),
   );
 
   const upcomingExpirations = expiringItemDocs
@@ -98,7 +123,7 @@ export const getDashboard = async (
         return [];
       }
 
-      const tripLabel = activeTripLabels.get(String(item.tripId));
+      const tripLabel = tripLabels.get(String(item.tripId));
 
       if (!tripLabel) {
         return [];
@@ -136,6 +161,9 @@ export const getDashboard = async (
       travelItems,
       documents,
       upcomingDates: upcomingDatesCount,
+      completedTrips,
+      checklistCompleted: checklistRows.find((row) => row._id === true)?.count ?? 0,
+      checklistTotal: checklistRows.reduce((sum, row) => sum + row.count, 0),
     },
     expiringSoonDays: EXPIRING_SOON_DAYS,
     upcomingTrips: upcomingTripDocs.map((trip) => toTripResponse(trip)),
@@ -155,5 +183,31 @@ export const getDashboard = async (
       updatedAt: entry.updatedAt.toISOString(),
     })),
     recentItems: recentItemDocs.map((item) => toTravelItemResponse(item)),
+    importantItems: importantItemDocs.map((item) => toTravelItemResponse(item)),
+    recentExpenses: recentExpenseDocs.map((expense) => ({
+      id: String(expense._id),
+      tripId: String(expense.tripId),
+      amount: expense.amount,
+      currency: expense.currency,
+      category: expense.category,
+      date: expense.date.toISOString(),
+      description: expense.description || undefined,
+      tripLabel: allTripLabels.get(String(expense.tripId)) ?? "Trip",
+    })),
+    upcomingItinerary: upcomingItineraryDocs.map((entry) => ({
+      id: String(entry._id),
+      tripId: String(entry.tripId),
+      title: entry.title,
+      date: entry.date.toISOString(),
+      time: entry.time || undefined,
+      location: entry.location || undefined,
+      tripLabel: allTripLabels.get(String(entry.tripId)) ?? "Trip",
+    })),
+    openChecklist: openChecklistDocs.map((item) => ({
+      id: String(item._id),
+      tripId: String(item.tripId),
+      title: item.title,
+      tripLabel: allTripLabels.get(String(item.tripId)) ?? "Trip",
+    })),
   };
 };

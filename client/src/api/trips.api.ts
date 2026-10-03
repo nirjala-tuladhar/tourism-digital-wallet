@@ -1,7 +1,7 @@
 import { apiClient } from "./client";
 import type { ApiSuccessResponse } from "../types/api.types";
 
-export type TripStatus = "active" | "inactive";
+export type TripStatus = "upcoming" | "active" | "completed" | "cancelled";
 
 export type Trip = {
   id: string;
@@ -13,6 +13,8 @@ export type Trip = {
   endDate: string;
   status: TripStatus;
   description?: string;
+  budgetAmount?: number | null;
+  budgetCurrency?: string | null;
   createdAt: string;
   updatedAt: string;
   travelItemCount?: number;
@@ -28,7 +30,10 @@ export type CreateTripPayload = {
   status?: TripStatus;
 };
 
-export type UpdateTripPayload = Partial<CreateTripPayload>;
+export type UpdateTripPayload = Partial<CreateTripPayload> & {
+  budgetAmount?: number | null;
+  budgetCurrency?: string | null;
+};
 
 export const tripsApi = {
   list: (token: string) =>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { fullNameSchema, passwordSchema } from "../lib/authSchemas";
 import { useNavigate } from "react-router-dom";
 import { LoaderCircle, LogOut } from "lucide-react";
 import { authApi } from "../api/auth.api";
@@ -16,13 +17,13 @@ import { clearCredentials } from "../store/authSlice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 const nameSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100, "Name must be 100 characters or fewer"),
+  name: fullNameSchema,
 });
 
-const passwordSchema = z
+const profilePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(8, "Password must be at least 8 characters").max(128),
+    newPassword: passwordSchema,
   })
   .refine((values) => values.currentPassword !== values.newPassword, {
     path: ["newPassword"],
@@ -30,7 +31,7 @@ const passwordSchema = z
   });
 
 type NameValues = z.infer<typeof nameSchema>;
-type PasswordValues = z.infer<typeof passwordSchema>;
+type PasswordValues = z.infer<typeof profilePasswordSchema>;
 
 export function ProfilePage() {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ export function ProfilePage() {
   });
 
   const passwordForm = useForm<PasswordValues>({
-    resolver: zodResolver(passwordSchema),
+    resolver: zodResolver(profilePasswordSchema),
     defaultValues: { currentPassword: "", newPassword: "" },
   });
 

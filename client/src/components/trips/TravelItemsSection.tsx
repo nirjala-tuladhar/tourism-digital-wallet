@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { LoaderCircle, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { LoaderCircle, MoreHorizontal, Pencil, Plus, Star, Trash2, Upload } from "lucide-react";
 import {
   TRAVEL_ITEM_CATEGORIES,
   type TravelItem,
@@ -24,16 +24,20 @@ import { FeedbackBanner } from "../ui/FeedbackBanner";
 import { Skeleton } from "../ui/Skeleton";
 import { TravelItemDetailDrawer } from "./TravelItemDetailDrawer";
 import { useToast } from "../ui/ToastProvider";
+import { uploadTravelItemFiles } from "../../hooks/useAttachments";
+import { useAppSelector } from "../../store/hooks";
 
 const itemSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(160),
   category: z.enum(TRAVEL_ITEM_CATEGORIES),
   description: z.string().max(2000).optional(),
-  labels: z.string().optional(),
   expiresAt: z
     .string()
     .trim()
     .refine(isReasonableExpiryDate, "Expiry date must be a valid date"),
+  remindMe: z.boolean(),
+  reminderDays: z.array(z.union([z.literal(30), z.literal(7), z.literal(1), z.literal(0)])),
+  customReminderDate: z.string().optional(),
 });
 
 type ItemFormValues = z.infer<typeof itemSchema>;
@@ -43,15 +47,6 @@ type TravelItemsSectionProps = {
   focusItemId?: string | null;
   onFocusCleared?: () => void;
 };
-
-function parseLabels(value?: string): string[] {
-  if (!value?.trim()) return [];
-  return value
-    .split(",")
-    .map((label) => label.trim())
-    .filter(Boolean)
-    .slice(0, 10);
-}
 
 export function TravelItemsSection({
   tripId,
@@ -70,6 +65,9 @@ export function TravelItemsSection({
   const [editingItem, setEditingItem] = useState<TravelItem | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TravelItem | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const token = useAppSelector((state) => state.auth.token);
   const pushToast = useToast();
 
   const {
@@ -77,16 +75,22 @@ export function TravelItemsSection({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
+    watch,
+    setValue,
   } = useForm<ItemFormValues>({
     resolver: zodResolver(itemSchema),
     defaultValues: {
       title: "",
       category: "Flight",
       description: "",
-      labels: "",
       expiresAt: "",
+      remindMe: false,
+      reminderDays: [],
+      customReminderDate: "",
     },
   });
+  const remindMe = watch("remindMe");
+  const reminderDays = watch("reminderDays");
 
   const openCreate = () => {
     setViewingItem(null);
@@ -96,9 +100,12 @@ export function TravelItemsSection({
       title: "",
       category: "Flight",
       description: "",
-      labels: "",
       expiresAt: "",
+      remindMe: false,
+      reminderDays: [],
+      customReminderDate: "",
     });
+    setPendingFiles([]);
     setShowForm(true);
   };
 
@@ -115,8 +122,14 @@ export function TravelItemsSection({
         ? item.category
         : "Other") as (typeof TRAVEL_ITEM_CATEGORIES)[number],
       description: item.description ?? "",
-      labels: item.labels.join(", "),
       expiresAt: item.expiresAt ? toDateInputValue(item.expiresAt) : "",
+      remindMe: item.reminderMode === "custom",
+      reminderDays: (item.reminderDays ?? []).filter(
+        (day): day is 30 | 7 | 1 | 0 => day === 30 || day === 7 || day === 1 || day === 0,
+      ),
+      customReminderDate: item.customReminderDates?.[0]
+        ? toDateInputValue(item.customReminderDates[0])
+        : "",
     });
     setShowForm(true);
   };
@@ -127,8 +140,15 @@ export function TravelItemsSection({
       title: values.title,
       category: values.category,
       description: values.description?.trim() || undefined,
-      labels: parseLabels(values.labels),
+      labels: editingItem?.labels ?? [],
       expiresAt: values.expiresAt?.trim() ? values.expiresAt : null,
+      important: editingItem?.important ?? false,
+      reminderMode: values.remindMe ? ("custom" as const) : ("default" as const),
+      reminderDays: values.remindMe ? values.reminderDays : [],
+      customReminderDates:
+        values.remindMe && values.customReminderDate?.trim()
+          ? [values.customReminderDate]
+          : [],
     };
 
     try {
@@ -138,8 +158,16 @@ export function TravelItemsSection({
           payload,
         });
       } else {
-        await createItem.mutateAsync(payload);
+        const created = await createItem.mutateAsync(payload);
+        if (pendingFiles.length > 0 && token) {
+          const uploads = await uploadTravelItemFiles(tripId, created.id, pendingFiles, token);
+          const failed = uploads.filter((result) => result.status === "failed");
+          if (failed.length > 0) {
+            pushToast("Travel item added. Some files could not be uploaded.");
+          }
+        }
       }
+      setPendingFiles([]);
       setShowForm(false);
       setEditingItem(null);
       pushToast(editingItem ? "Travel item updated." : "Travel item added.");
@@ -200,7 +228,7 @@ export function TravelItemsSection({
           {formError ? <FeedbackBanner tone="error" message={formError} /> : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+            <div>
               <label htmlFor="item-title" className="mb-2 block text-sm font-medium">
                 Title
               </label>
@@ -231,48 +259,97 @@ export function TravelItemsSection({
               </select>
             </div>
 
-            <div>
-              <label htmlFor="item-labels" className="mb-2 block text-sm font-medium">
-                Labels (comma-separated)
-              </label>
-              <input
-                id="item-labels"
-                placeholder="business, confirmation"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
-                {...register("labels")}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="item-expires" className="mb-2 block text-sm font-medium">
-                Expiry date
-                <span className="ml-1 font-normal text-slate-500">(optional)</span>
-              </label>
-              <input
-                id="item-expires"
-                type="date"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
-                {...register("expiresAt")}
-              />
+            <div className="sm:col-span-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="min-w-0 flex-1">
+                  <label htmlFor="item-expires" className="mb-2 block text-sm font-medium">
+                    Expiry date
+                    <span className="ml-1 font-normal text-slate-500">(optional)</span>
+                  </label>
+                  <input
+                    id="item-expires"
+                    type="date"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+                    {...register("expiresAt")}
+                  />
+                </div>
+                <label className="flex h-[46px] items-center gap-2 text-sm text-slate-700">
+                  <input type="checkbox" className="h-4 w-4 accent-brand" {...register("remindMe")} />
+                  Remind me
+                </label>
+              </div>
               {errors.expiresAt ? (
                 <p className="mt-1 text-sm text-rose-600">{errors.expiresAt.message}</p>
+              ) : null}
+              {remindMe ? (
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                  {(
+                    [
+                      [30, "30 days before"],
+                      [7, "7 days before"],
+                      [1, "1 day before"],
+                      [0, "On expiry"],
+                    ] as const
+                  ).map(([day, label]) => (
+                    <label key={day} className="flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-brand"
+                        checked={reminderDays.includes(day)}
+                        onChange={(event) => {
+                          const next = event.target.checked
+                            ? [...reminderDays, day]
+                            : reminderDays.filter((value) => value !== day);
+                          setValue("reminderDays", next, { shouldValidate: true });
+                        }}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    Custom date
+                    <input type="date" className="rounded-xl border border-slate-300 px-3 py-2" {...register("customReminderDate")} />
+                  </label>
+                </div>
               ) : null}
             </div>
 
             <div className="sm:col-span-2">
-              <label
-                htmlFor="item-description"
-                className="mb-2 block text-sm font-medium"
-              >
+              <label htmlFor="item-description" className="mb-2 block text-sm font-medium">
                 Description
               </label>
-              <textarea
+              <input
                 id="item-description"
-                rows={3}
+                type="text"
                 className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("description")}
               />
             </div>
+
+            {editingItem ? null : (
+              <div className="sm:col-span-2">
+                <label htmlFor="item-files" className="mb-2 block text-sm font-medium">
+                  Files
+                </label>
+                <input
+                  ref={fileInputRef}
+                  id="item-files"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  multiple
+                  className="sr-only"
+                  onChange={(event) => setPendingFiles(Array.from(event.target.files ?? []))}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <Upload className="h-4 w-4" aria-hidden="true" />
+                  {pendingFiles.length > 0 ? `${pendingFiles.length} file${pendingFiles.length === 1 ? "" : "s"} selected` : "Upload files"}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -295,6 +372,7 @@ export function TravelItemsSection({
             <button
               type="button"
               onClick={() => {
+                setPendingFiles([]);
                 setShowForm(false);
                 setEditingItem(null);
               }}
@@ -372,7 +450,8 @@ export function TravelItemsSection({
                     <p className={`text-xs font-semibold uppercase tracking-wide ${meta.accent}`}>
                       {meta.label}
                     </p>
-                    <h4 className="mt-0.5 truncate font-semibold text-slate-900">
+                    <h4 className="mt-0.5 flex items-center gap-1 truncate font-semibold text-slate-900">
+                      {item.important ? <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" aria-label="Important" /> : null}
                       {item.title}
                     </h4>
                     {item.description ? (
@@ -413,7 +492,21 @@ export function TravelItemsSection({
                 </button>
 
                 {menuItemId === item.id ? (
-                  <div className="absolute right-0 z-10 mt-1 w-36 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                  <div className="absolute right-0 z-10 mt-1 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuItemId(null);
+                        updateItem.mutate({
+                          itemId: item.id,
+                          payload: { important: !item.important },
+                        });
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                    >
+                      <Star className="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />
+                      {item.important ? "Unmark important" : "Mark important"}
+                    </button>
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"

@@ -13,6 +13,8 @@ import { NotFoundPage } from "../pages/NotFoundPage";
 import { TripsPage } from "../pages/TripsPage";
 import { CreateTripPage } from "../pages/CreateTripPage";
 import { EditTripPage } from "../pages/EditTripPage";
+import { ExpensesPage } from "../pages/ExpensesPage";
+import { TripExpensesPage } from "../pages/TripExpensesPage";
 import { ProfilePage } from "../pages/ProfilePage";
 import { SearchPage } from "../pages/SearchPage";
 import { SettingsPage } from "../pages/SettingsPage";
@@ -97,6 +99,24 @@ export function AppRoutes() {
             element={
               <MainLayout>
                 <ProfilePage />
+              </MainLayout>
+            }
+          />
+
+          <Route
+            path="/expenses"
+            element={
+              <MainLayout>
+                <ExpensesPage />
+              </MainLayout>
+            }
+          />
+
+          <Route
+            path="/expenses/:tripId"
+            element={
+              <MainLayout>
+                <TripExpensesPage />
               </MainLayout>
             }
           />

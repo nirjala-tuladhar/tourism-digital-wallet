@@ -22,12 +22,41 @@ export type DashboardData = {
     travelItems: number;
     documents: number;
     upcomingDates: number;
+    completedTrips: number;
+    checklistCompleted: number;
+    checklistTotal: number;
   };
   expiringSoonDays: number;
   upcomingTrips: Trip[];
   upcomingDates: ImportantDate[];
   upcomingExpirations: UpcomingExpiration[];
   recentItems: TravelItem[];
+  importantItems: TravelItem[];
+  recentExpenses: Array<{
+    id: string;
+    tripId: string;
+    amount: number;
+    currency: string;
+    category: string;
+    date: string;
+    description?: string;
+    tripLabel: string;
+  }>;
+  upcomingItinerary: Array<{
+    id: string;
+    tripId: string;
+    title: string;
+    date: string;
+    time?: string;
+    location?: string;
+    tripLabel: string;
+  }>;
+  openChecklist?: Array<{
+    id: string;
+    tripId: string;
+    title: string;
+    tripLabel: string;
+  }>;
 };
 
 export const dashboardApi = {

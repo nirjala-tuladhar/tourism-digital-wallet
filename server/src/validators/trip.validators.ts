@@ -105,6 +105,14 @@ export const updateTripSchema = z
       .optional()
       .nullable(),
     status: z.enum(TRIP_STATUSES).optional(),
+    budgetAmount: z.number().min(0, "Budget must be 0 or more").max(1_000_000_000).nullable().optional(),
+    budgetCurrency: z
+      .string()
+      .trim()
+      .length(3, "Currency must be a 3-letter code")
+      .regex(/^[A-Za-z]{3}$/, "Currency must be a 3-letter code")
+      .nullable()
+      .optional(),
   })
   .superRefine((data, ctx) => {
     if (data.startDate && data.endDate) {

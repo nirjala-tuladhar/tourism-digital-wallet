@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   MapPinned,
+  Receipt,
   Search,
   Settings,
   UserRound,
@@ -21,10 +22,16 @@ const items = [
     iconClass: "bg-emerald-100 text-emerald-700",
   },
   {
+    to: "/expenses",
+    label: "Expenses",
+    icon: Receipt,
+    iconClass: "bg-amber-100 text-amber-700",
+  },
+  {
     to: "/search",
     label: "Search",
     icon: Search,
-    iconClass: "bg-violet-100 text-violet-700",
+    iconClass: "bg-teal-100 text-teal-800",
   },
   {
     to: "/profile",
@@ -42,7 +49,7 @@ const items = [
 
 export function Sidebar() {
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-slate-200 bg-white p-4 md:block">
+    <aside className="hidden w-60 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4 lg:block">
       <nav aria-label="Main">
         <ul className="space-y-1">
           {items.map((item) => {

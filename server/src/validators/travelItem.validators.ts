@@ -5,6 +5,51 @@ import { optionalDateField } from "./date.validators.js";
 const emptyIfMissing = (value: unknown) =>
   value === undefined || value === null ? "" : value;
 
+const reminderDaysField = z
+  .array(z.union([z.literal(30), z.literal(7), z.literal(1), z.literal(0)]))
+  .max(4)
+  .optional();
+
+const customReminderDatesField = z
+  .array(
+    z
+      .string()
+      .min(1)
+      .refine((value) => !Number.isNaN(Date.parse(value)), "Reminder date must be valid"),
+  )
+  .max(5)
+  .optional();
+
+const reminderShape = {
+  important: z.boolean().optional(),
+  reminderMode: z.enum(["default", "custom"]).optional(),
+  reminderDays: reminderDaysField,
+  customReminderDates: customReminderDatesField,
+};
+
+const requireCustomReminder = (
+  data: {
+    reminderMode?: "default" | "custom";
+    reminderDays?: number[];
+    customReminderDates?: string[];
+  },
+  ctx: z.RefinementCtx,
+) => {
+  if (data.reminderMode !== "custom") {
+    return;
+  }
+
+  const hasPreset = (data.reminderDays?.length ?? 0) > 0;
+  const hasCustom = (data.customReminderDates?.length ?? 0) > 0;
+
+  if (!hasPreset && !hasCustom) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["reminderDays"],
+      message: "Select at least one reminder",
+    });
+  }
+};
 export const createTravelItemSchema = z.object({
   title: z.preprocess(
     emptyIfMissing,
@@ -34,7 +79,8 @@ export const createTravelItemSchema = z.object({
     .max(10, "You can add up to 10 labels")
     .optional(),
   expiresAt: optionalDateField,
-});
+  ...reminderShape,
+}).superRefine(requireCustomReminder);
 
 export const updateTravelItemSchema = z.object({
   title: z
@@ -65,7 +111,8 @@ export const updateTravelItemSchema = z.object({
     .max(10, "You can add up to 10 labels")
     .optional(),
   expiresAt: optionalDateField,
-});
+  ...reminderShape,
+}).superRefine(requireCustomReminder);
 
 export type CreateTravelItemInput = z.infer<typeof createTravelItemSchema>;
 export type UpdateTravelItemInput = z.infer<typeof updateTravelItemSchema>;

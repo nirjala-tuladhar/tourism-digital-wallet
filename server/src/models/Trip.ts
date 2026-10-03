@@ -1,7 +1,30 @@
 import mongoose, { HydratedDocument, Schema, Types } from "mongoose";
 
-export const TRIP_STATUSES = ["active", "inactive"] as const;
+export const TRIP_STATUSES = ["upcoming", "active", "completed", "cancelled"] as const;
 export type TripStatus = (typeof TRIP_STATUSES)[number];
+
+/** Legacy value kept so trips saved before the lifecycle change still load. */
+export const STORED_TRIP_STATUSES = [...TRIP_STATUSES, "inactive"] as const;
+
+export const normalizeTripStatus = (status: string): TripStatus =>
+  status === "inactive" ? "cancelled" : status === "upcoming" || status === "active" || status === "completed" || status === "cancelled"
+    ? status
+    : "upcoming";
+
+export const canTransitionTripStatus = (from: TripStatus, to: TripStatus): boolean => {
+  if (from === to) {
+    return true;
+  }
+
+  const allowed: Record<TripStatus, TripStatus[]> = {
+    upcoming: ["active", "completed", "cancelled"],
+    active: ["completed", "cancelled"],
+    completed: ["cancelled"],
+    cancelled: ["upcoming", "active"],
+  };
+
+  return allowed[from].includes(to);
+};
 
 export type TripAttrs = {
   userId: Types.ObjectId;
@@ -12,6 +35,8 @@ export type TripAttrs = {
   endDate: Date;
   status: TripStatus;
   description?: string;
+  budgetAmount?: number | null;
+  budgetCurrency?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -54,8 +79,8 @@ const tripSchema = new Schema<TripAttrs>(
     },
     status: {
       type: String,
-      enum: TRIP_STATUSES,
-      default: "active",
+      enum: STORED_TRIP_STATUSES,
+      default: "upcoming",
       required: true,
       index: true,
     },
@@ -63,6 +88,16 @@ const tripSchema = new Schema<TripAttrs>(
       type: String,
       trim: true,
       maxlength: 2000,
+    },
+    budgetAmount: {
+      type: Number,
+      default: null,
+    },
+    budgetCurrency: {
+      type: String,
+      uppercase: true,
+      trim: true,
+      default: null,
     },
   },
   { timestamps: true },

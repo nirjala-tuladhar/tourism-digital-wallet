@@ -2,30 +2,19 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Eye, EyeOff, LoaderCircle, Wallet } from "lucide-react";
+import { LoaderCircle, Wallet } from "lucide-react";
+import { PasswordVisibilityButton } from "../components/auth/PasswordVisibilityButton";
+import { authInputClass, registerSchema } from "../lib/authSchemas";
 import { authApi } from "../api/auth.api";
 import { ApiClientError } from "../api/client";
-import { setCredentials } from "../store/authSlice";
-import { useAppDispatch } from "../store/hooks";
 
-const registerSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100),
-  email: z
-    .string()
-    .trim()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(128, "Password must be 128 characters or fewer"),
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type RegisterFormValues = {
+  name: string;
+  email: string;
+  password: string;
+};
 
 export function RegisterPage() {
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -47,9 +36,8 @@ export function RegisterPage() {
     setFormError(null);
 
     try {
-      const response = await authApi.register(values);
-      dispatch(setCredentials(response.data));
-      navigate("/dashboard", { replace: true });
+      await authApi.register(values);
+      navigate("/login", { replace: true, state: { registered: true } });
     } catch (error) {
       if (error instanceof ApiClientError) {
         setFormError(error.message);
@@ -96,17 +84,19 @@ export function RegisterPage() {
                 htmlFor="name"
                 className="mb-2 block text-sm font-medium text-teal-50"
               >
-                Full name
+                Full name <span className="text-rose-300" aria-hidden="true">*</span>
+                <span className="sr-only"> required</span>
               </label>
               <input
                 id="name"
                 type="text"
                 autoComplete="name"
+                required
                 aria-invalid={errors.name ? "true" : "false"}
                 aria-describedby={errors.name ? "name-error" : undefined}
                 disabled={isSubmitting}
-                className="w-full rounded-xl border border-white/15 bg-white/5 px-3.5 py-3 text-white outline-none transition placeholder:text-teal-100/40 focus:border-teal-300/60 focus:ring-2 focus:ring-teal-300/30 disabled:cursor-not-allowed disabled:opacity-60"
-                placeholder="Alex Traveler"
+                className={authInputClass(Boolean(errors.name))}
+                placeholder="e.g Nirjala Tuladhar"
                 {...register("name")}
               />
               {errors.name ? (
@@ -121,18 +111,20 @@ export function RegisterPage() {
                 htmlFor="email"
                 className="mb-2 block text-sm font-medium text-teal-50"
               >
-                Email
+                Email <span className="text-rose-300" aria-hidden="true">*</span>
+                <span className="sr-only"> required</span>
               </label>
               <input
                 id="email"
                 type="email"
                 autoComplete="email"
                 inputMode="email"
+                required
                 aria-invalid={errors.email ? "true" : "false"}
                 aria-describedby={errors.email ? "email-error" : undefined}
                 disabled={isSubmitting}
-                className="w-full rounded-xl border border-white/15 bg-white/5 px-3.5 py-3 text-white outline-none transition placeholder:text-teal-100/40 focus:border-teal-300/60 focus:ring-2 focus:ring-teal-300/30 disabled:cursor-not-allowed disabled:opacity-60"
-                placeholder="you@example.com"
+                className={authInputClass(Boolean(errors.email))}
+                placeholder="e.g nirjala123@gmail.com"
                 {...register("email")}
               />
               {errors.email ? (
@@ -147,35 +139,29 @@ export function RegisterPage() {
                 htmlFor="password"
                 className="mb-2 block text-sm font-medium text-teal-50"
               >
-                Password
+                Password <span className="text-rose-300" aria-hidden="true">*</span>
+                <span className="sr-only"> required</span>
               </label>
               <div className="relative">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
+                  required
                   aria-invalid={errors.password ? "true" : "false"}
                   aria-describedby={
                     errors.password ? "password-error" : undefined
                   }
                   disabled={isSubmitting}
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-3.5 py-3 pr-12 text-white outline-none transition placeholder:text-teal-100/40 focus:border-teal-300/60 focus:ring-2 focus:ring-teal-300/30 disabled:cursor-not-allowed disabled:opacity-60"
-                  placeholder="At least 8 characters"
+                  className={`${authInputClass(Boolean(errors.password))} pr-12`}
+                  placeholder="e.g nirjala123"
                   {...register("password")}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((current) => !current)}
-                  className="absolute inset-y-0 right-0 flex items-center px-3 text-teal-100/80 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-teal-300/50"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                <PasswordVisibilityButton
+                  visible={showPassword}
                   disabled={isSubmitting}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" aria-hidden="true" />
-                  ) : (
-                    <Eye className="h-5 w-5" aria-hidden="true" />
-                  )}
-                </button>
+                  onToggle={() => setShowPassword((current) => !current)}
+                />
               </div>
               {errors.password ? (
                 <p
@@ -211,6 +197,7 @@ export function RegisterPage() {
             Already have an account?{" "}
             <Link
               to="/login"
+              replace
               className="font-medium text-teal-200 underline-offset-4 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300/50"
             >
               Sign in

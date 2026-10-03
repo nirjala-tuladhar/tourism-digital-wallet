@@ -21,6 +21,10 @@ export type TravelItemAttrs = {
   description?: string;
   labels: string[];
   expiresAt?: Date | null;
+  important: boolean;
+  reminderMode: "default" | "custom";
+  reminderDays: number[];
+  customReminderDates: Date[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -65,6 +69,25 @@ const travelItemSchema = new Schema<TravelItemAttrs>(
       type: Date,
       default: null,
     },
+    important: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
+    reminderMode: {
+      type: String,
+      enum: ["default", "custom"],
+      default: "default",
+      required: true,
+    },
+    reminderDays: {
+      type: [Number],
+      default: [],
+    },
+    customReminderDates: {
+      type: [Date],
+      default: [],
+    },
   },
   { timestamps: true },
 );
@@ -73,6 +96,7 @@ const travelItemSchema = new Schema<TravelItemAttrs>(
 travelItemSchema.index({ tripId: 1, userId: 1 });
 travelItemSchema.index({ userId: 1, createdAt: -1 });
 travelItemSchema.index({ userId: 1, expiresAt: 1 });
+travelItemSchema.index({ userId: 1, important: 1 });
 
 export const TravelItem = mongoose.model<TravelItemAttrs>(
   "TravelItem",

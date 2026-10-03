@@ -3,7 +3,7 @@ import type { ApiSuccessResponse } from "../types/api.types";
 import type { TravelItemCategory } from "./travelItems.api";
 import type { ExpiryStatus } from "../lib/expiry";
 
-export type SearchTripStatus = "all" | "active" | "inactive";
+export type SearchTripStatus = "all" | "upcoming" | "active" | "completed" | "cancelled";
 export type SearchExpiryFilter = "all" | "none" | "soon" | "expired";
 
 export type SearchFilters = {
@@ -25,7 +25,7 @@ export type SearchResult = {
   category?: string;
   tripName: string;
   tripLabel: string;
-  tripStatus: "active" | "inactive";
+  tripStatus: "upcoming" | "active" | "completed" | "cancelled";
   matchedOn: "trip" | "travel-item";
   expiresAt?: string | null;
   expiryStatus: ExpiryStatus;

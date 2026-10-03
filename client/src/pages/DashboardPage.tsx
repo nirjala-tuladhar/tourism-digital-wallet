@@ -1,21 +1,27 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   CalendarDays,
+  Check,
   FileText,
-  FileUp,
+  ListChecks,
   MapPinned,
   Package,
   Plus,
+  Receipt,
   Search,
   Sparkles,
 } from "lucide-react";
+import { planningApi } from "../api/planning.api";
 import { EmptyState } from "../components/ui/EmptyState";
 import { FeedbackBanner } from "../components/ui/FeedbackBanner";
 import { Skeleton } from "../components/ui/Skeleton";
 import { ApiClientError } from "../api/client";
 import { useDashboard } from "../hooks/useDashboard";
 import { formatTripDate, formatTripRange } from "../lib/date";
+import { queryKeys } from "../lib/queryKeys";
 import { getCategoryMeta } from "../lib/travelCategories";
 import { useAppSelector } from "../store/hooks";
 
@@ -68,10 +74,7 @@ export function DashboardPage() {
     );
   }
 
-  const hasAnyContent =
-    data.stats.totalTrips > 0 ||
-    data.stats.travelItems > 0 ||
-    data.upcomingDates.length > 0;
+  const hasAnyContent = data.stats.totalTrips > 0 || data.stats.travelItems > 0;
 
   const stats = [
     {
@@ -91,11 +94,19 @@ export function DashboardPage() {
       to: "/trips",
     },
     {
-      label: "Travel Items",
-      value: data.stats.travelItems,
-      hint: "Flights, hotels, and more",
-      icon: Package,
-      iconClass: "bg-violet-100 text-violet-700",
+      label: "Upcoming",
+      value: data.stats.upcomingTrips,
+      hint: "Trips still ahead",
+      icon: CalendarDays,
+      iconClass: "bg-sky-100 text-sky-700",
+      to: "/trips",
+    },
+    {
+      label: "Completed",
+      value: data.stats.completedTrips ?? 0,
+      hint: "Finished journeys",
+      icon: Sparkles,
+      iconClass: "bg-teal-100 text-teal-800",
       to: "/trips",
     },
     {
@@ -106,14 +117,6 @@ export function DashboardPage() {
       iconClass: "bg-amber-100 text-amber-700",
       to: "/search",
     },
-    {
-      label: "Upcoming",
-      value: data.stats.upcomingDates,
-      hint: "Important dates ahead",
-      icon: CalendarDays,
-      iconClass: "bg-rose-100 text-rose-700",
-      to: "/trips",
-    },
   ];
 
   return (
@@ -121,23 +124,23 @@ export function DashboardPage() {
       <section className="relative overflow-hidden rounded-3xl bg-[#062a33] p-6 text-white shadow-sm sm:p-8">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(45,212,191,0.35),_transparent_55%),radial-gradient(ellipse_at_bottom_left,_rgba(14,116,144,0.55),_transparent_50%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(45,212,191,0.22),_transparent_55%),radial-gradient(ellipse_at_bottom_left,_rgba(14,116,144,0.35),_transparent_50%)]"
         />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-xl">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               {greetingForNow()}
               {user?.name ? `, ${user.name.split(" ")[0]}` : ""}
             </h2>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/90 sm:text-base">
-              Keep your travel plans, documents, and important dates organized in one place.
+              Keep your travel plans, documents, and checklist organized in one place.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
               to="/trips/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-300 px-4 py-2.5 text-sm font-semibold text-[#04343f] shadow-sm transition hover:bg-teal-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand shadow-sm transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               Create Trip
@@ -174,6 +177,12 @@ export function DashboardPage() {
           );
         })}
       </section>
+
+      <OpenChecklist
+        items={data.openChecklist ?? []}
+        completed={data.stats.checklistCompleted ?? 0}
+        total={data.stats.checklistTotal ?? 0}
+      />
 
       {!hasAnyContent ? (
         <EmptyState
@@ -291,7 +300,7 @@ export function DashboardPage() {
 
           <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-teal-800">
                 <Search className="h-4 w-4" aria-hidden="true" />
               </span>
               Quick actions
@@ -299,9 +308,9 @@ export function DashboardPage() {
           <div className="grid gap-3">
             <Link
               to="/search"
-              className="inline-flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-900 transition hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="inline-flex items-center gap-2 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-medium text-teal-900 transition hover:bg-teal-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-              <Search className="h-4 w-4 text-violet-600" aria-hidden="true" />
+              <Search className="h-4 w-4 text-teal-700" aria-hidden="true" />
               Search and filter
             </Link>
             <Link
@@ -319,11 +328,18 @@ export function DashboardPage() {
               Add travel item
             </Link>
             <Link
-              to="/trips"
+              to="/expenses"
               className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             >
-              <FileUp className="h-4 w-4 text-amber-600" aria-hidden="true" />
-              Upload document
+              <Receipt className="h-4 w-4 text-amber-600" aria-hidden="true" />
+              Add expense
+            </Link>
+            <Link
+              to="/trips"
+              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <ListChecks className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+              Add checklist item
             </Link>
             <Link
               to="/trips"
@@ -337,34 +353,7 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
-              <CalendarDays className="h-4 w-4" aria-hidden="true" />
-            </span>
-            Upcoming Important Dates
-          </h3>
-          {data.upcomingDates.length === 0 ? (
-            <p className="text-sm text-slate-500">No upcoming dates.</p>
-          ) : (
-            <ul className="space-y-3">
-              {data.upcomingDates.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-4 py-3 transition hover:border-brand/20"
-                >
-                  <p className="text-sm font-semibold text-slate-900">
-                    {formatTripDate(entry.date)}
-                  </p>
-                  <p className="mt-0.5 text-sm text-slate-700">{entry.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">{entry.type}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
+      <section>
         <div className="space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
@@ -403,6 +392,144 @@ export function DashboardPage() {
           )}
         </div>
       </section>
+
+      <section className="grid gap-6 lg:grid-cols-3">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">Important items</h3>
+          {(data.importantItems ?? []).length === 0 ? (
+            <p className="mt-2 text-sm text-slate-500">Star a travel item to keep it here.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {(data.importantItems ?? []).map((item) => (
+                <li key={item.id}>
+                  <Link to={`/trips?trip=${item.tripId}&item=${item.id}`} className="block rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800 hover:border-brand/30">
+                    {item.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">Recent expenses</h3>
+          {(data.recentExpenses ?? []).length === 0 ? (
+            <p className="mt-2 text-sm text-slate-500">Expenses from your trips will show up here.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {(data.recentExpenses ?? []).map((expense) => (
+                <li key={expense.id}>
+                  <Link to={`/expenses/${expense.tripId}`} className="block rounded-xl border border-slate-200 px-3 py-2 text-sm hover:border-brand/30">
+                    <span className="font-medium text-slate-900">{expense.currency} {expense.amount.toFixed(2)}</span>
+                    <span className="mt-0.5 block text-xs text-slate-500">{expense.category} · {expense.tripLabel}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">Upcoming itinerary</h3>
+          {(data.upcomingItinerary ?? []).length === 0 ? (
+            <p className="mt-2 text-sm text-slate-500">Add plans inside a trip to see them here.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {(data.upcomingItinerary ?? []).map((entry) => (
+                <li key={entry.id}>
+                  <Link to={`/trips?trip=${entry.tripId}`} className="block rounded-xl border border-slate-200 px-3 py-2 text-sm hover:border-brand/30">
+                    <span className="font-medium text-slate-900">{entry.title}</span>
+                    <span className="mt-0.5 block text-xs text-slate-500">
+                      {formatTripDate(entry.date)}{entry.time ? ` · ${entry.time}` : ""} · {entry.tripLabel}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
     </div>
+  );
+}
+
+function OpenChecklist({
+  items,
+  completed,
+  total,
+}: {
+  items: Array<{ id: string; tripId: string; title: string; tripLabel: string }>;
+  completed: number;
+  total: number;
+}) {
+  const token = useAppSelector((state) => state.auth.token);
+  const queryClient = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+  const toggle = useMutation({
+    mutationFn: (item: { id: string; tripId: string }) => {
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
+      return planningApi.updateChecklist(item.tripId, item.id, { completed: true }, token);
+    },
+    onSuccess: async (_data, item) => {
+      setError(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.checklist(item.tripId) }),
+      ]);
+    },
+    onError: (err) => {
+      setError(err instanceof ApiClientError ? err.message : "Unable to update checklist.");
+    },
+  });
+
+  return (
+    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+            <ListChecks className="h-4 w-4" aria-hidden="true" />
+          </span>
+          Checklist
+        </h3>
+        <p className="text-sm text-slate-500">
+          {completed} of {total} completed
+        </p>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div
+          className="h-full rounded-full bg-brand"
+          style={{ width: total ? `${(completed / total) * 100}%` : "0%" }}
+        />
+      </div>
+
+      {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}
+
+      {items.length === 0 ? (
+        <p className="mt-4 text-sm text-slate-500">
+          {total === 0 ? "Add a checklist item from a trip." : "Everything on your checklist is done."}
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {items.map((item) => (
+            <li key={item.id} className="flex items-center gap-3 rounded-2xl border border-slate-200 px-3 py-2">
+              <button
+                type="button"
+                aria-label={`Mark ${item.title} complete`}
+                disabled={toggle.isPending}
+                onClick={() => toggle.mutate(item)}
+                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-300 text-transparent hover:border-brand hover:text-brand"
+              >
+                <Check className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-slate-900">{item.title}</p>
+                <p className="truncate text-xs text-slate-500">{item.tripLabel}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

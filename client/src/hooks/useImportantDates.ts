@@ -34,6 +34,7 @@ export function useCreateImportantDate(tripId: string) {
           queryKey: queryKeys.importantDates(tripId),
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
       ]);
     },
   });
@@ -65,6 +66,7 @@ export function useUpdateImportantDate(tripId: string) {
           queryKey: queryKeys.importantDates(tripId),
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
       ]);
     },
   });
@@ -84,6 +86,7 @@ export function useDeleteImportantDate(tripId: string) {
           queryKey: queryKeys.importantDates(tripId),
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
       ]);
     },
   });

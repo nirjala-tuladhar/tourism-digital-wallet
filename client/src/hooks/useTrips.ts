@@ -52,6 +52,7 @@ export function useCreateTrip() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.trips }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.expenseBoard }),
         queryClient.invalidateQueries({ queryKey: ["search"] }),
         queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
       ]);
@@ -73,6 +74,7 @@ export function useUpdateTrip(id: string) {
         queryClient.invalidateQueries({ queryKey: queryKeys.trips }),
         queryClient.invalidateQueries({ queryKey: queryKeys.trip(trip.id) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.expenseBoard }),
         queryClient.invalidateQueries({ queryKey: ["search"] }),
         queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
       ]);
@@ -94,6 +96,7 @@ export function useDeleteTrip() {
         queryClient.invalidateQueries({ queryKey: queryKeys.trips }),
         queryClient.invalidateQueries({ queryKey: queryKeys.trip(id) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.expenseBoard }),
         queryClient.invalidateQueries({ queryKey: ["search"] }),
         queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
       ]);

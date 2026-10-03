@@ -9,6 +9,7 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import attachmentRoutes from "./routes/attachment.routes.js";
 import searchRoutes from "./routes/search.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import expenseRoutes from "./routes/expense.routes.js";
 import { corsOptions } from "./config/cors.js";
 import { connectDatabase } from "./config/database.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
@@ -30,6 +31,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/attachments", attachmentRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/expenses", expenseRoutes);
 
 app.use(errorMiddleware);
 
