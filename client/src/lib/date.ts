@@ -16,6 +16,13 @@ export function formatTripRange(startDate: string, endDate: string): string {
   return `${formatTripDate(startDate)} — ${formatTripDate(endDate)}`;
 }
 
+export function todayDateInputValue(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 export function toDateInputValue(value: string): string {
   const date = new Date(value);
 

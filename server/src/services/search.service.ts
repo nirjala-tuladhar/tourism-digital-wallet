@@ -1,4 +1,5 @@
 import { EXPIRING_SOON_DAYS } from "../config/expiry.js";
+import { normalizeTripStatus } from "../models/Trip.js";
 import { Attachment } from "../models/Attachment.js";
 import { TRAVEL_ITEM_CATEGORIES, TravelItem } from "../models/TravelItem.js";
 import { Trip } from "../models/Trip.js";
@@ -49,7 +50,7 @@ export const searchWallet = async (
   const results = buildSearchResults({
     query: input.q ?? "",
     filters: {
-      tripStatus: input.tripStatus,
+      tripStatus: input.tripStatus === "inactive" ? "cancelled" : input.tripStatus,
       category: input.category,
       expiry: input.expiry,
       dateFrom: input.dateFrom,
@@ -61,7 +62,7 @@ export const searchWallet = async (
       origin: trip.origin,
       destination: trip.destination,
       description: trip.description || undefined,
-      status: trip.status,
+      status: normalizeTripStatus(trip.status),
       startDate: trip.startDate.toISOString(),
       endDate: trip.endDate.toISOString(),
     })),

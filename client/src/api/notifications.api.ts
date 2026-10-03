@@ -8,7 +8,10 @@ export type AppNotification = {
     | "expiry_urgent"
     | "expiry_day"
     | "expiry_today"
-    | "expiry_expired";
+    | "expiry_expired"
+    | "trip_start"
+    | "trip_end"
+    | "important_date";
   title: string;
   message: string;
   relatedTripId?: string;

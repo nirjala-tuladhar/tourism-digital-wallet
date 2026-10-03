@@ -26,6 +26,10 @@ export type TravelItem = {
   expiresAt?: string | null;
   expiryStatus?: ExpiryStatus;
   daysUntilExpiry?: number | null;
+  important?: boolean;
+  reminderMode?: "default" | "custom";
+  reminderDays?: number[];
+  customReminderDates?: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -36,6 +40,10 @@ export type TravelItemPayload = {
   description?: string;
   labels?: string[];
   expiresAt?: string | null;
+  important?: boolean;
+  reminderMode?: "default" | "custom";
+  reminderDays?: Array<30 | 7 | 1 | 0>;
+  customReminderDates?: string[];
 };
 
 export const travelItemsApi = {

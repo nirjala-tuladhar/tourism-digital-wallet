@@ -5,7 +5,7 @@ import {
   type ExpiryStatus,
 } from "../config/expiry.js";
 
-export type SearchTripStatus = "all" | "active" | "inactive";
+export type SearchTripStatus = "all" | "upcoming" | "active" | "completed" | "cancelled" | "inactive";
 export type SearchExpiryFilter = "all" | "none" | "soon" | "expired";
 
 export type SearchFilters = {
@@ -22,7 +22,7 @@ export type SearchTripRecord = {
   origin: string;
   destination: string;
   description?: string;
-  status: "active" | "inactive";
+  status: "upcoming" | "active" | "completed" | "cancelled";
   startDate: string;
   endDate: string;
 };
@@ -48,7 +48,7 @@ export type SearchResult = {
   category?: string;
   tripName: string;
   tripLabel: string;
-  tripStatus: "active" | "inactive";
+  tripStatus: "upcoming" | "active" | "completed" | "cancelled";
   matchedOn: "trip" | "travel-item";
   expiresAt?: string | null;
   expiryStatus: ExpiryStatus;

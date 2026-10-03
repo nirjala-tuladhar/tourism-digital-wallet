@@ -6,6 +6,9 @@ export const NOTIFICATION_TYPES = [
   "expiry_day",
   "expiry_today",
   "expiry_expired",
+  "trip_start",
+  "trip_end",
+  "important_date",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

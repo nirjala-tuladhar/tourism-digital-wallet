@@ -9,4 +9,8 @@ export const queryKeys = {
   search: (filters: unknown) => ["search", filters] as const,
   notifications: ["notifications"] as const,
   profile: ["profile"] as const,
+  itinerary: (tripId: string) => ["trips", tripId, "itinerary"] as const,
+  checklist: (tripId: string) => ["trips", tripId, "checklist"] as const,
+  expenses: (tripId: string) => ["trips", tripId, "expenses"] as const,
+  expenseBoard: ["expenses", "board"] as const,
 };

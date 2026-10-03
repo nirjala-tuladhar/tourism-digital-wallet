@@ -19,6 +19,10 @@ export type TravelItemResponse = {
   expiresAt: string | null;
   expiryStatus: "none" | "active" | "expiring_soon" | "expired";
   daysUntilExpiry: number | null;
+  important: boolean;
+  reminderMode: "default" | "custom";
+  reminderDays: number[];
+  customReminderDates: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -44,9 +48,44 @@ export const toTravelItemResponse = (
   description: item.description || undefined,
   labels: item.labels ?? [],
   ...expiryFields(item.expiresAt),
+  important: Boolean(item.important),
+  reminderMode: item.reminderMode === "custom" ? "custom" : "default",
+  reminderDays: item.reminderDays ?? [],
+  customReminderDates: (item.customReminderDates ?? []).map((date) => date.toISOString()),
   createdAt: item.createdAt.toISOString(),
   updatedAt: item.updatedAt.toISOString(),
 });
+
+const assignReminders = (
+  item: TravelItemDocument,
+  input: {
+    reminderMode?: "default" | "custom";
+    reminderDays?: number[];
+    customReminderDates?: string[];
+    important?: boolean;
+  },
+): void => {
+  if (input.important !== undefined) {
+    item.important = input.important;
+  }
+
+  if (input.reminderMode !== undefined) {
+    item.reminderMode = input.reminderMode;
+  }
+
+  if (input.reminderDays !== undefined) {
+    item.reminderDays = input.reminderDays;
+  }
+
+  if (input.customReminderDates !== undefined) {
+    item.customReminderDates = input.customReminderDates.map((value) => parseDateOnly(value));
+  }
+
+  if (item.reminderMode !== "custom") {
+    item.reminderDays = [];
+    item.customReminderDates = [];
+  }
+};
 
 const assignExpiry = (
   item: TravelItemDocument,
@@ -76,6 +115,13 @@ export const createTravelItem = async (
       : undefined,
     labels: input.labels ?? [],
     expiresAt: input.expiresAt ? parseDateOnly(input.expiresAt) : null,
+    important: input.important ?? false,
+    reminderMode: input.reminderMode ?? "default",
+    reminderDays: input.reminderMode === "custom" ? (input.reminderDays ?? []) : [],
+    customReminderDates:
+      input.reminderMode === "custom"
+        ? (input.customReminderDates ?? []).map((value) => parseDateOnly(value))
+        : [],
   });
 
   const { syncExpiryNotifications } = await import("./notification.service.js");
@@ -139,6 +185,7 @@ export const updateTravelItem = async (
         : input.description.trim();
   }
   assignExpiry(item, input.expiresAt);
+  assignReminders(item, input);
 
   await item.save();
 

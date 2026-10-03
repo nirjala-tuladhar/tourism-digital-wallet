@@ -197,9 +197,9 @@ export function TripForm({
         >
           Description
         </label>
-        <textarea
+        <input
           id="description"
-          rows={4}
+          type="text"
           disabled={isSubmitting}
           className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:opacity-60"
           {...register("description")}

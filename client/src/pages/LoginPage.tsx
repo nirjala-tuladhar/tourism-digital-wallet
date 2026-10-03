@@ -2,34 +2,30 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Eye, EyeOff, LoaderCircle, Wallet } from "lucide-react";
+import { LoaderCircle, Wallet } from "lucide-react";
+import { PasswordVisibilityButton } from "../components/auth/PasswordVisibilityButton";
+import { authInputClass, loginSchema } from "../lib/authSchemas";
 import { authApi } from "../api/auth.api";
 import { ApiClientError } from "../api/client";
 import { setCredentials } from "../store/authSlice";
 import { useAppDispatch } from "../store/hooks";
 
-const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
 
 export function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const expired =
-    (location.state as { reason?: string } | null)?.reason === "expired";
+  const locationState = location.state as { reason?: string; registered?: boolean } | null;
+  const expired = locationState?.reason === "expired";
   const [formError, setFormError] = useState<string | null>(
     expired ? "Your session has expired. Please sign in again." : null,
   );
+  const [registeredNotice] = useState(Boolean(locationState?.registered));
 
   const fromPath =
     (location.state as { from?: { pathname?: string } } | null)?.from
@@ -117,6 +113,14 @@ export function LoginPage() {
               </div>
 
               <form className="space-y-5" onSubmit={onSubmit} noValidate>
+                {registeredNotice ? (
+                  <div
+                    role="status"
+                    className="rounded-lg border border-teal-200/30 bg-teal-400/10 px-3 py-2 text-sm text-teal-50"
+                  >
+                    Account created. Sign in to continue.
+                  </div>
+                ) : null}
                 {formError ? (
                   <div
                     role="alert"
@@ -131,17 +135,19 @@ export function LoginPage() {
                     htmlFor="email"
                     className="mb-2 block text-sm font-medium text-teal-50"
                   >
-                    Email
+                    Email <span className="text-rose-300" aria-hidden="true">*</span>
+                    <span className="sr-only"> required</span>
                   </label>
                   <input
                     id="email"
                     type="email"
                     autoComplete="email"
                     inputMode="email"
+                    required
                     aria-invalid={errors.email ? "true" : "false"}
                     aria-describedby={errors.email ? "email-error" : undefined}
                     disabled={isSubmitting}
-                    className="w-full rounded-xl border border-white/15 bg-white/5 px-3.5 py-3 text-white outline-none transition placeholder:text-teal-100/40 focus:border-teal-300/60 focus:ring-2 focus:ring-teal-300/30 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={authInputClass(Boolean(errors.email))}
                     placeholder="you@example.com"
                     {...register("email")}
                   />
@@ -161,37 +167,29 @@ export function LoginPage() {
                     htmlFor="password"
                     className="mb-2 block text-sm font-medium text-teal-50"
                   >
-                    Password
+                    Password <span className="text-rose-300" aria-hidden="true">*</span>
+                    <span className="sr-only"> required</span>
                   </label>
                   <div className="relative">
                     <input
                       id="password"
                       type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
+                      required
                       aria-invalid={errors.password ? "true" : "false"}
                       aria-describedby={
                         errors.password ? "password-error" : undefined
                       }
                       disabled={isSubmitting}
-                      className="w-full rounded-xl border border-white/15 bg-white/5 px-3.5 py-3 pr-12 text-white outline-none transition placeholder:text-teal-100/40 focus:border-teal-300/60 focus:ring-2 focus:ring-teal-300/30 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`${authInputClass(Boolean(errors.password))} pr-12`}
                       placeholder="Enter your password"
                       {...register("password")}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((current) => !current)}
-                      className="absolute inset-y-0 right-0 flex items-center px-3 text-teal-100/80 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-teal-300/50"
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
+                    <PasswordVisibilityButton
+                      visible={showPassword}
                       disabled={isSubmitting}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5" aria-hidden="true" />
-                      ) : (
-                        <Eye className="h-5 w-5" aria-hidden="true" />
-                      )}
-                    </button>
+                      onToggle={() => setShowPassword((current) => !current)}
+                    />
                   </div>
                   {errors.password ? (
                     <p

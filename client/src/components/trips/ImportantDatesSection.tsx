@@ -139,7 +139,7 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
           {formError ? <FeedbackBanner tone="error" message={formError} /> : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+            <div>
               <label htmlFor="date-title" className="mb-2 block text-sm font-medium">
                 Title
               </label>
@@ -150,21 +150,6 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
               />
               {errors.title ? (
                 <p className="mt-1 text-sm text-rose-600">{errors.title.message}</p>
-              ) : null}
-            </div>
-
-            <div>
-              <label htmlFor="date-value" className="mb-2 block text-sm font-medium">
-                Date
-              </label>
-              <input
-                id="date-value"
-                type="date"
-                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
-                {...register("date")}
-              />
-              {errors.date ? (
-                <p className="mt-1 text-sm text-rose-600">{errors.date.message}</p>
               ) : null}
             </div>
 
@@ -185,16 +170,31 @@ export function ImportantDatesSection({ tripId }: ImportantDatesSectionProps) {
               </select>
             </div>
 
-            <div className="sm:col-span-2">
+            <div>
+              <label htmlFor="date-value" className="mb-2 block text-sm font-medium">
+                Date
+              </label>
+              <input
+                id="date-value"
+                type="date"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+                {...register("date")}
+              />
+              {errors.date ? (
+                <p className="mt-1 text-sm text-rose-600">{errors.date.message}</p>
+              ) : null}
+            </div>
+
+            <div>
               <label
                 htmlFor="date-description"
                 className="mb-2 block text-sm font-medium"
               >
                 Description
               </label>
-              <textarea
+              <input
                 id="date-description"
-                rows={3}
+                type="text"
                 className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
                 {...register("description")}
               />

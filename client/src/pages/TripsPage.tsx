@@ -32,8 +32,10 @@ export function TripsPage() {
     );
   }, [trips, query]);
 
+  const upcomingTrips = filtered.filter((trip) => trip.status === "upcoming");
   const activeTrips = filtered.filter((trip) => trip.status === "active");
-  const inactiveTrips = filtered.filter((trip) => trip.status === "inactive");
+  const completedTrips = filtered.filter((trip) => trip.status === "completed");
+  const cancelledTrips = filtered.filter((trip) => trip.status === "cancelled");
 
   useEffect(() => {
     if (!trips || trips.length === 0 || selectedId) {
@@ -133,7 +135,7 @@ export function TripsPage() {
       <label className="relative block">
         <span className="sr-only">Search trips</span>
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-500"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-600"
           aria-hidden="true"
         />
         <input
@@ -199,6 +201,17 @@ export function TripsPage() {
         />
       ) : null}
 
+      {upcomingTrips.length > 0 ? (
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Upcoming</h3>
+          <div className="space-y-3">
+            {upcomingTrips.map((trip) => (
+              <TripListItem key={trip.id} trip={trip} selected={trip.id === selectedId} onSelect={selectTrip} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {activeTrips.length > 0 ? (
         <section className="space-y-3">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -217,19 +230,23 @@ export function TripsPage() {
         </section>
       ) : null}
 
-      {inactiveTrips.length > 0 ? (
+      {completedTrips.length > 0 ? (
         <section className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Inactive
-          </h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Completed</h3>
           <div className="space-y-3">
-            {inactiveTrips.map((trip) => (
-              <TripListItem
-                key={trip.id}
-                trip={trip}
-                selected={trip.id === selectedId}
-                onSelect={selectTrip}
-              />
+            {completedTrips.map((trip) => (
+              <TripListItem key={trip.id} trip={trip} selected={trip.id === selectedId} onSelect={selectTrip} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {cancelledTrips.length > 0 ? (
+        <section className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cancelled</h3>
+          <div className="space-y-3">
+            {cancelledTrips.map((trip) => (
+              <TripListItem key={trip.id} trip={trip} selected={trip.id === selectedId} onSelect={selectTrip} />
             ))}
           </div>
         </section>

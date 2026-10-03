@@ -32,6 +32,65 @@ export function useTravelItemAttachments(
   });
 }
 
+export async function uploadTravelItemFiles(
+  tripId: string,
+  travelItemId: string,
+  files: File[],
+  token: string,
+) {
+  const results: Array<{
+    fileName: string;
+    status: "uploaded" | "failed";
+    message?: string;
+  }> = [];
+
+  for (const file of files) {
+    try {
+      if (!ALLOWED_MIME_TYPES.has(file.type)) {
+        throw new Error("Unsupported file type. Allowed: PDF, JPG, PNG, WebP");
+      }
+
+      const payload: UploadUrlPayload = {
+        fileName: file.name,
+        mimeType: file.type,
+        fileSize: file.size,
+      };
+
+      const uploadUrlResponse = await attachmentsApi.requestUploadUrl(
+        tripId,
+        travelItemId,
+        payload,
+        token,
+      );
+
+      await uploadFileToPresignedUrl(uploadUrlResponse.data.uploadUrl, file);
+
+      const confirmPayload: ConfirmAttachmentPayload = {
+        storageKey: uploadUrlResponse.data.storageKey,
+        fileName: uploadUrlResponse.data.fileName,
+        mimeType: uploadUrlResponse.data.mimeType,
+        fileSize: uploadUrlResponse.data.fileSize,
+      };
+
+      await attachmentsApi.confirm(tripId, travelItemId, confirmPayload, token);
+      results.push({ fileName: file.name, status: "uploaded" });
+    } catch (error) {
+      results.push({
+        fileName: file.name,
+        status: "failed",
+        message:
+          error instanceof ApiClientError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Upload failed",
+      });
+    }
+  }
+
+  return results;
+}
+
 export function useUploadTravelItemAttachments(
   tripId: string,
   travelItemId: string,
@@ -40,70 +99,7 @@ export function useUploadTravelItemAttachments(
   const token = useAppSelector((state) => state.auth.token)!;
 
   return useMutation({
-    mutationFn: async (files: File[]) => {
-      const results: Array<{
-        fileName: string;
-        status: "uploaded" | "failed";
-        message?: string;
-      }> = [];
-
-      for (const file of files) {
-        try {
-          if (!ALLOWED_MIME_TYPES.has(file.type)) {
-            throw new Error(
-              "Unsupported file type. Allowed: PDF, JPG, PNG, WebP",
-            );
-          }
-
-          const payload: UploadUrlPayload = {
-            fileName: file.name,
-            mimeType: file.type,
-            fileSize: file.size,
-          };
-
-          const uploadUrlResponse = await attachmentsApi.requestUploadUrl(
-            tripId,
-            travelItemId,
-            payload,
-            token,
-          );
-
-          await uploadFileToPresignedUrl(
-            uploadUrlResponse.data.uploadUrl,
-            file,
-          );
-
-          const confirmPayload: ConfirmAttachmentPayload = {
-            storageKey: uploadUrlResponse.data.storageKey,
-            fileName: uploadUrlResponse.data.fileName,
-            mimeType: uploadUrlResponse.data.mimeType,
-            fileSize: uploadUrlResponse.data.fileSize,
-          };
-
-          await attachmentsApi.confirm(
-            tripId,
-            travelItemId,
-            confirmPayload,
-            token,
-          );
-
-          results.push({ fileName: file.name, status: "uploaded" });
-        } catch (error) {
-          results.push({
-            fileName: file.name,
-            status: "failed",
-            message:
-              error instanceof ApiClientError
-                ? error.message
-                : error instanceof Error
-                  ? error.message
-                  : "Upload failed",
-          });
-        }
-      }
-
-      return results;
-    },
+    mutationFn: (files: File[]) => uploadTravelItemFiles(tripId, travelItemId, files, token),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.attachments(tripId, travelItemId),
