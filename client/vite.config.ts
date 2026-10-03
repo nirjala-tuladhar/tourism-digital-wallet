@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss()],
     server: {
       allowedHosts: allowedHost ? [allowedHost] : [],
+      hmr: allowedHost
+        ? { host: allowedHost, protocol: "wss", clientPort: 443 }
+        : undefined,
     },
   };
 });
